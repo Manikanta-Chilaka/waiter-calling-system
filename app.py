@@ -9,6 +9,14 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 DATABASE = 'database.db'
 
+# Initialize DB if it doesn't exist
+if not os.path.exists(DATABASE):
+    try:
+        import init_db
+        init_db.init_db()
+    except Exception as e:
+        print(f"Could not auto-initialize DB: {e}")
+
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
@@ -105,12 +113,4 @@ def update_request():
     return jsonify({'success': True, 'request': updated_request})
 
 if __name__ == '__main__':
-    # Initialize DB if it doesn't exist
-    if not os.path.exists(DATABASE):
-        try:
-            import init_db
-            init_db.init_db()
-        except Exception as e:
-            print(f"Could not auto-initialize DB: {e}")
-            
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
