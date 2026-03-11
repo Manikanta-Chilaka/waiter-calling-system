@@ -7,9 +7,8 @@ import os
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_mvp_key!'
 
-# Neon Cloud PostgreSQL
-NEON_DB_URL = 'postgresql://neondb_owner:npg_bV9weU7SMCjZ@ep-twilight-snow-a816ghyg-pooler.eastus2.azure.neon.tech/waiter_db?sslmode=require'
-app.config['SQLALCHEMY_DATABASE_URI'] = NEON_DB_URL
+# Database URL from environment variable (set in Render dashboard)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
