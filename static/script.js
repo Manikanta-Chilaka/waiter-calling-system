@@ -6,7 +6,8 @@ async function callWaiter(tableId) {
     const statusMsg = document.getElementById('statusMessage');
     const errMsg = document.getElementById('errorMessage');
 
-    btn.disabled = true;
+    btn.disabled = true; // Briefly disable
+    const originalText = btn.innerHTML;
     btn.innerHTML = 'Calling...';
     errMsg.style.display = 'none';
 
@@ -20,15 +21,16 @@ async function callWaiter(tableId) {
         const result = await response.json();
 
         if (response.ok) {
-            btn.innerHTML = 'Waitlist Joined';
+            btn.innerHTML = 'CALL WAITER AGAIN'; // Allow calling again to increase urgency
+            btn.disabled = false; // Re-enable for multiple clicks
             statusMsg.style.display = 'block';
-            statusMsg.textContent = 'Waiter is coming!';
+            statusMsg.textContent = result.message || 'Waiter is coming!';
         } else {
             throw new Error(result.error || 'Failed to call waiter');
         }
     } catch (err) {
         btn.disabled = false;
-        btn.innerHTML = 'CALL WAITER';
+        btn.innerHTML = originalText;
         errMsg.style.display = 'block';
         errMsg.textContent = err.message;
     }
@@ -92,6 +94,12 @@ function addRequestToDashboard(request) {
 
     // Fill data
     clone.querySelector('.table-number').textContent = request.table_number;
+    
+    if (request.click_count && request.click_count > 1) {
+        // Add a click indicator badge
+        const titleElem = clone.querySelector('.card-title');
+        titleElem.innerHTML += ` <span class="badge bg-danger rounded-pill ms-2 click-badge" style="font-size: 0.7em;">${request.click_count} Clicks</span>`;
+    }
 
     const timeElem = clone.querySelector('.time-ago');
     timeElem.textContent = new Date(request.created_at).toLocaleTimeString();
@@ -119,6 +127,17 @@ function updateRequestStatusUI(request) {
     const cardElem = document.getElementById(`req-${request.id}`);
 
     if (!cardElem) return; // Might have just arrived while UI is reloading
+    
+    // Update click count badge if present
+    const titleElem = cardElem.querySelector('.card-title');
+    let clickBadge = titleElem.querySelector('.click-badge');
+    if (request.click_count && request.click_count > 1) {
+        if (!clickBadge) {
+            titleElem.innerHTML += ` <span class="badge bg-danger rounded-pill ms-2 click-badge" style="font-size: 0.7em;">${request.click_count} Clicks</span>`;
+        } else {
+            clickBadge.textContent = `${request.click_count} Clicks`;
+        }
+    }
 
     if (request.status === 'completed') {
         cardElem.remove();
@@ -194,4 +213,69 @@ function playNotificationSound() {
         oscillator.start();
         oscillator.stop(context.currentTime + 0.1);
     } catch (e) { /* ignore if audio context isn't allowed without user interacton */ }
+}
+
+// Waiter stats function
+async function showStats() {
+    const statsModal = new bootstrap.Modal(document.getElementById('statsModal'));
+    statsModal.show();
+    
+    const body = document.getElementById('statsBody');
+    body.innerHTML = '<div class="text-center">Loading stats...</div>';
+    
+    try {
+        const response = await fetch('/api/stats');
+        const stats = await response.json();
+        
+        if (stats.length === 0) {
+            body.innerHTML = '<div class="text-center text-muted">No completed orders yet.</div>';
+            return;
+        }
+        
+        // Find current staff
+        const myStats = stats.find(s => s.waiter === CURRENT_STAFF_ID);
+        
+        let html = '<h6 class="text-center text-warning mb-3">Your Stats</h6>';
+        if (myStats) {
+            html += `
+            <div class="row mb-4 text-center">
+                <div class="col-6">
+                    <div class="fs-2 fw-bold">${myStats.orders_taken}</div>
+                    <div class="small text-muted">Orders Taken</div>
+                </div>
+                <div class="col-6">
+                    <div class="fs-2 fw-bold">${myStats.avg_response_time_seconds}s</div>
+                    <div class="small text-muted">Avg Response</div>
+                </div>
+            </div>
+            `;
+        } else {
+            html += '<div class="text-center mb-4">You have not taken any orders yet.</div>';
+        }
+        
+        html += '<hr class="border-secondary"><h6 class="text-center text-muted mb-3">Leaderboard</h6>';
+        
+        // Sort by most orders taken
+        stats.sort((a, b) => b.orders_taken - a.orders_taken);
+        
+        html += '<ul class="list-group list-group-flush" style="border-radius: 8px; overflow: hidden;">';
+        stats.forEach((s, index) => {
+            const isMe = s.waiter === CURRENT_STAFF_ID;
+            html += `
+            <li class="list-group-item bg-secondary text-white d-flex justify-content-between align-items-center ${isMe ? 'border border-warning' : ''}">
+                <div>
+                    <span class="badge bg-dark me-2">#${index + 1}</span>
+                    ${s.waiter} ${isMe ? '(You)' : ''}
+                </div>
+                <span class="badge bg-primary rounded-pill">${s.orders_taken} calls</span>
+            </li>
+            `;
+        });
+        html += '</ul>';
+        
+        body.innerHTML = html;
+        
+    } catch (e) {
+        body.innerHTML = '<div class="text-center text-danger">Failed to load stats.</div>';
+    }
 }
