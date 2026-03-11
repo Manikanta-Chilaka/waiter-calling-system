@@ -1,0 +1,66 @@
+/* General Aesthetics */
+body {
+    font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+    transition: background-color 0.3s ease;
+}
+
+/* Customer Background */
+.customer-bg {
+    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+}
+
+/* Dashboard Background */
+.dashboard-bg {
+    background-color: #121212 !important;
+}
+
+/* Interactive Card Styling */
+.interactive-card {
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+.interactive-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+}
+
+/* Call Button Animation */
+.call-btn {
+    transition: all 0.2s;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border: none;
+}
+
+.call-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0, 123, 255, 0.3);
+}
+
+.call-btn:active {
+    transform: scale(0.95);
+}
+
+/* Request Cards (Waiter Dashboard) */
+.request-card .card {
+    background: #1e1e1e !important;
+    transition: transform 0.2s, background-color 0.3s;
+}
+
+.request-card.new-request .card {
+    animation: flashInfo 2s infinite;
+}
+
+.request-card.accepted .card {
+    border-left: 5px solid #28a745 !important;
+    background: #192a1d !important;
+}
+
+/* Animations */
+@keyframes flashInfo {
+    0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); border-left: 5px solid transparent; }
+    50% { box-shadow: 0 0 15px 5px rgba(255, 193, 7, 0.2); border-left: 5px solid #ffc107; }
+    100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); border-left: 5px solid transparent; }
+}
