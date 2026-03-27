@@ -1,39 +1,103 @@
 // Frontend common logic
 
 // Customer functions
-async function callWaiter(tableId) {
+
+// --- GPS Geolocation Validation ---
+// Calculates distance between two coordinates using the Haversine formula
+function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // Radius of the earth in meters
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; 
+}
+
+// ⚠️ IMPORTANT: Replace these coordinates with your actual restaurant's GPS coordinates!
+// You can get these by right-clicking your restaurant building on Google Maps.
+const RESTAURANT_LAT = 17.3850;   // Example Lat
+const RESTAURANT_LON = 78.4867;   // Example Lon
+const MAX_DISTANCE_METERS = 200;  // 200m is ideal because smartphone GPS can drift indoors!
+
+function callWaiter(tableId) {
     const btn = document.getElementById('callWaiterBtn');
     const statusMsg = document.getElementById('statusMessage');
     const errMsg = document.getElementById('errorMessage');
 
     btn.disabled = true; // Briefly disable
     const originalText = btn.innerHTML;
-    btn.innerHTML = 'Calling...';
+    btn.innerHTML = '<i class="bi bi-geo-alt-fill"></i> Checking Location...';
     errMsg.style.display = 'none';
 
-    try {
-        const response = await fetch('/api/call-waiter', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ table: tableId })
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            btn.innerHTML = 'CALL WAITER AGAIN'; // Allow calling again to increase urgency
-            btn.disabled = false; // Re-enable for multiple clicks
-            statusMsg.style.display = 'block';
-            statusMsg.textContent = result.message || 'Waiter is coming!';
-        } else {
-            throw new Error(result.error || 'Failed to call waiter');
-        }
-    } catch (err) {
+    if (!navigator.geolocation) {
         btn.disabled = false;
         btn.innerHTML = originalText;
         errMsg.style.display = 'block';
-        errMsg.textContent = err.message;
+        errMsg.textContent = 'Geolocation is not supported by your browser.';
+        return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+            
+            const distance = getDistanceFromLatLonInM(userLat, userLon, RESTAURANT_LAT, RESTAURANT_LON);
+            console.log("Distance from restaurant:", distance, "meters");
+
+            if (distance > MAX_DISTANCE_METERS) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                errMsg.style.display = 'block';
+                errMsg.textContent = `You are too far from the restaurant (${Math.round(distance)}m). You must be within ${MAX_DISTANCE_METERS}m to order.`;
+                return;
+            }
+
+            // Customer is within 200m! Proceed to call the waiter.
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Calling...';
+            try {
+                const response = await fetch('/api/call-waiter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ table: tableId })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    btn.innerHTML = '<i class="bi bi-bell-fill"></i> CALL WAITER AGAIN';
+                    btn.disabled = false;
+                    statusMsg.style.display = 'block';
+                    statusMsg.textContent = result.message || 'Waiter is coming!';
+                } else {
+                    throw new Error(result.error || 'Failed to call waiter');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                errMsg.style.display = 'block';
+                errMsg.textContent = err.message;
+            }
+        },
+        (error) => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            errMsg.style.display = 'block';
+            let errorMsg = 'Could not get your location.';
+            if (error.code === error.PERMISSION_DENIED) {
+                errorMsg = 'Please allow Location Access to prove you are in the restaurant.';
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+                errorMsg = 'Location information is unavailable.';
+            } else if (error.code === error.TIMEOUT) {
+                errorMsg = 'The request to get your location timed out.';
+            }
+            errMsg.textContent = errorMsg;
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
 }
 
 // Waiter functions
