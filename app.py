@@ -12,7 +12,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:/
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+# allow_upgrades=False: the threading/gthread worker can't serve WebSocket,
+# so we stay on HTTP long-polling. Advertising a websocket upgrade the server
+# can't fulfill causes clients to flap between Connected/Disconnected.
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading", allow_upgrades=False)
 
 class WaiterRequest(db.Model):
     __tablename__ = 'requests'

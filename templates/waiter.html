@@ -73,7 +73,9 @@
     <script src="/static/script.js"></script>
     <script>
         // Waiter Dashboard Logic
-        const socket = io();
+        // Polling-only: the server can't serve WebSocket, so skip the upgrade
+        // to avoid Connected/Disconnected flapping on some networks.
+        const socket = io({ transports: ['polling'], upgrade: false });
 
         socket.on('connect', () => {
             document.getElementById('connectionStatus').textContent = 'Connected';
