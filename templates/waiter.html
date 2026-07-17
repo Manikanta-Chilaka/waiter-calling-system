@@ -25,17 +25,41 @@
     </nav>
 
     <div class="container">
-        <h3 class="mb-4">Active Requests</h3>
 
-        <div class="row" id="requestsContainer">
-            <!-- Templates will be injected here via JS -->
-            <div class="text-center text-muted" id="noRequestsMsg">
-                <p>No active table requests right now.</p>
+        <!-- Tab switcher -->
+        <div class="btn-group w-100 mb-4 shadow-sm" role="group">
+            <button type="button" class="btn btn-primary fw-bold tab-btn" data-tab="callsTab">
+                <i class="bi bi-bell-fill"></i> Waiter Calls
+                <span class="badge bg-light text-dark ms-1" id="callsCount">0</span>
+            </button>
+            <button type="button" class="btn btn-outline-light fw-bold tab-btn" data-tab="ordersTab">
+                <i class="bi bi-basket-fill"></i> Food Orders
+                <span class="badge bg-light text-dark ms-1" id="ordersCount">0</span>
+            </button>
+        </div>
+
+        <!-- ============ TAB 1: WAITER CALLS ============ -->
+        <div id="callsTab" class="tab-pane">
+            <h3 class="mb-4">Active Requests</h3>
+            <div class="row" id="requestsContainer">
+                <div class="text-center text-muted" id="noRequestsMsg">
+                    <p>No active table requests right now.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ TAB 2: FOOD ORDERS ============ -->
+        <div id="ordersTab" class="tab-pane" style="display:none;">
+            <h3 class="mb-4">Food Orders</h3>
+            <div class="row" id="ordersContainer">
+                <div class="text-center text-muted" id="noOrdersMsg">
+                    <p>No food orders right now.</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Hidden Template for Cloning -->
+    <!-- Hidden Template for Cloning (waiter calls) -->
     <template id="requestTemplate">
         <div class="col-md-4 mb-4 request-card">
             <div class="card bg-secondary text-white shadow rounded-3 h-100 border-0">
@@ -81,23 +105,36 @@
             document.getElementById('connectionStatus').textContent = 'Connected';
             document.getElementById('connectionStatus').className = 'badge bg-success';
         });
-
         socket.on('disconnect', () => {
             document.getElementById('connectionStatus').textContent = 'Disconnected';
             document.getElementById('connectionStatus').className = 'badge bg-danger';
         });
 
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
         // Initial Load
         loadRequests();
+        loadOrders();
 
-        // Socket Events
+        // ----- Waiter call events -----
         socket.on('new_request', (data) => {
             addRequestToDashboard(data);
             playNotificationSound();
         });
-
         socket.on('update_request', (data) => {
             updateRequestStatusUI(data);
+        });
+
+        // ----- Food order events -----
+        socket.on('new_order', (order) => {
+            addOrderToDashboard(order);
+            playNotificationSound();
+        });
+        socket.on('order_updated', (order) => {
+            updateOrderCard(order);
         });
     </script>
 </body>

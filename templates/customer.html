@@ -4,14 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer - Call Waiter</title>
+    <title>Table {{ table_id }} - CU2 Brewhouse</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/style.css">
 
@@ -21,34 +19,66 @@
 
 <body class="bg-light customer-bg">
 
-    <div class="container d-flex flex-column justify-content-center align-items-center min-vh-100">
-        <div class="card p-5 text-center shadow-lg rounded-4 interactive-card">
+    <!-- Header with tab switcher -->
+    <div class="container py-3" style="max-width: 720px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold text-dark mb-0"><i class="bi bi-shop"></i> Table {{ table_id }}</h4>
+            <span class="badge bg-secondary" id="connectionStatus">Connecting…</span>
+        </div>
 
-            <h1 class="mb-4 fw-bold text-dark">Table {{ table_id }}</h1>
-
-            <p class="text-muted mb-4 fs-5">
-                Need assistance? Request a waiter instantly.
-            </p>
-
-            <button
-                id="callWaiterBtn"
-                class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold shadow-sm call-btn"
-                onclick="callWaiter({{ table_id }})">
-
-                <i class="bi bi-bell-fill"></i> CALL WAITER
+        <!-- Tab buttons -->
+        <div class="btn-group w-100 mb-4 shadow-sm" role="group">
+            <button type="button" class="btn btn-primary fw-bold tab-btn" data-tab="callTab">
+                <i class="bi bi-bell-fill"></i> Call Waiter
             </button>
+            <button type="button" class="btn btn-outline-primary fw-bold tab-btn" data-tab="menuTab">
+                <i class="bi bi-journal-text"></i> Order Food
+            </button>
+        </div>
 
-            <div id="statusMessage"
-                class="mt-4 text-success fw-semibold fs-5"
-                style="display:none;">
-                Waiter is coming!
+        <!-- ============ TAB 1: CALL WAITER ============ -->
+        <div id="callTab" class="tab-pane">
+            <div class="card p-5 text-center shadow-lg rounded-4 interactive-card">
+                <p class="text-muted mb-4 fs-5">Need assistance? Request a waiter instantly.</p>
+
+                <button id="callWaiterBtn"
+                        class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold shadow-sm call-btn"
+                        onclick="callWaiter({{ table_id }})">
+                    <i class="bi bi-bell-fill"></i> CALL WAITER
+                </button>
+
+                <div id="statusMessage" class="mt-4 text-success fw-semibold fs-5" style="display:none;">
+                    Waiter is coming!
+                </div>
+                <div id="errorMessage" class="mt-4 text-danger fw-semibold fs-5" style="display:none;"></div>
             </div>
+        </div>
 
-            <div id="errorMessage"
-                class="mt-4 text-danger fw-semibold fs-5"
-                style="display:none;">
+        <!-- ============ TAB 2: MENU / ORDER FOOD ============ -->
+        <div id="menuTab" class="tab-pane" style="display:none;">
+            <!-- Live order status banner -->
+            <div id="orderStatusBanner" class="alert alert-info d-none fw-semibold" role="alert"></div>
+
+            <!-- Menu (rendered by JS) -->
+            <div id="menuContainer">
+                <div class="text-center text-muted py-5">Loading menu…</div>
             </div>
+            <!-- Spacer so the fixed cart bar never hides the last item -->
+            <div style="height: 90px;"></div>
+        </div>
+    </div>
 
+    <!-- ============ STICKY CART BAR ============ -->
+    <div id="cartBar" class="fixed-bottom bg-dark text-white p-3 shadow-lg" style="display:none;">
+        <div class="container d-flex justify-content-between align-items-center" style="max-width: 720px;">
+            <div>
+                <span class="fw-bold" id="cartCount">0 items</span>
+                <span class="ms-2 fs-5 fw-bold" id="cartTotal">₹0</span>
+            </div>
+            <button class="btn btn-success fw-bold rounded-pill px-4" id="placeOrderBtn"
+                    onclick="placeOrder({{ table_id }})">
+                <i class="bi bi-bag-check-fill"></i> Place Order
+            </button>
         </div>
     </div>
 
@@ -56,35 +86,51 @@
     <script src="/static/script.js"></script>
 
     <script>
+        // The table this page belongs to (from the URL).
+        const TABLE_ID = {{ table_id }};
 
         // Polling-only: the server can't serve WebSocket, so skip the upgrade
         // to avoid Connected/Disconnected flapping on some networks.
         const socket = io({ transports: ['polling'], upgrade: false });
 
-        socket.on('update_request', function(data) {
-
-            if (data.table_number == {{ table_id }} && data.status == 'accepted') {
-
-                const msg = document.getElementById('statusMessage');
-                msg.style.display = "block";
-                msg.textContent = "Waiter " + (data.accepted_by || "") + " is on their way!";
-                msg.className = "mt-4 text-primary fw-bold fs-5";
-
-            }
-
-            else if (data.table_number == {{ table_id }} && data.status == 'completed') {
-
-                const btn = document.getElementById('callWaiterBtn');
-
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-bell-fill"></i> CALL WAITER';
-
-                document.getElementById('statusMessage').style.display = "none";
-
-            }
-
+        socket.on('connect', () => {
+            const b = document.getElementById('connectionStatus');
+            b.textContent = 'Connected'; b.className = 'badge bg-success';
+        });
+        socket.on('disconnect', () => {
+            const b = document.getElementById('connectionStatus');
+            b.textContent = 'Offline'; b.className = 'badge bg-danger';
         });
 
+        // Waiter accepted / completed a CALL for this table
+        socket.on('update_request', function (data) {
+            if (data.table_number != TABLE_ID) return;
+            const msg = document.getElementById('statusMessage');
+            if (data.status === 'accepted') {
+                msg.style.display = 'block';
+                msg.textContent = 'Waiter ' + (data.accepted_by || '') + ' is on their way!';
+                msg.className = 'mt-4 text-primary fw-bold fs-5';
+            } else if (data.status === 'completed') {
+                const btn = document.getElementById('callWaiterBtn');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-bell-fill"></i> CALL WAITER';
+                msg.style.display = 'none';
+            }
+        });
+
+        // Kitchen/waiter updated the status of one of THIS table's food orders
+        socket.on('order_updated', function (order) {
+            if (order.table_number != TABLE_ID) return;
+            showOrderStatus(order);
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        // Load the menu on first paint
+        loadMenu();
     </script>
 
 </body>

@@ -58,6 +58,32 @@ body {
     background: #192a1d !important;
 }
 
+/* Menu items (customer order page) */
+.menu-item {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.menu-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important;
+}
+
+/* Veg / Non-veg indicator */
+.veg-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+.veg-dot.veg { background: #0f9d58; }
+.veg-dot.nonveg { background: #db3236; }
+
+/* Order cards flash while NEW, same cue as new call requests */
+.order-card.new-request .card {
+    animation: flashInfo 2s infinite;
+}
+
 /* Animations */
 @keyframes flashInfo {
     0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); border-left: 5px solid transparent; }

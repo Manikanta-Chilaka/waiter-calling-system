@@ -3,6 +3,9 @@ from flask_socketio import SocketIO, emit
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
 import os
+import json
+
+from menu import MENU, MENU_BY_ID, CATEGORIES
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_mvp_key!'
@@ -38,6 +41,25 @@ class WaiterRequest(db.Model):
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'click_count': self.click_count,
             'accepted_at': self.accepted_at.isoformat() if self.accepted_at else None
+        }
+
+class Order(db.Model):
+    __tablename__ = 'orders'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    table_number = db.Column(db.Integer, nullable=False)
+    items = db.Column(db.Text, nullable=False)          # JSON: [{"name","price","qty"}]
+    total = db.Column(db.Float, nullable=False, default=0)
+    status = db.Column(db.String, nullable=False, default='new')  # new | preparing | served
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'table_number': self.table_number,
+            'items': json.loads(self.items) if self.items else [],
+            'total': self.total,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
 
 with app.app_context():
@@ -121,6 +143,77 @@ def update_request():
     socketio.emit('update_request', req_dict)
 
     return jsonify({'success': True, 'request': req_dict})
+
+# ----------------------- Food Ordering -----------------------
+
+@app.route('/api/menu', methods=['GET'])
+def get_menu():
+    return jsonify({'categories': CATEGORIES, 'items': MENU})
+
+@app.route('/api/place-order', methods=['POST'])
+def place_order():
+    data = request.json or {}
+    table_id = data.get('table')
+    cart = data.get('items', [])  # [{"id": 1, "qty": 2}, ...]
+
+    if not table_id:
+        return jsonify({'error': 'Table number is required'}), 400
+    if not cart:
+        return jsonify({'error': 'Your cart is empty'}), 400
+
+    # Build the order from the SERVER-SIDE menu so prices can't be tampered with.
+    line_items = []
+    total = 0
+    for entry in cart:
+        item = MENU_BY_ID.get(entry.get('id'))
+        try:
+            qty = int(entry.get('qty', 0))
+        except (TypeError, ValueError):
+            qty = 0
+        if not item or qty <= 0:
+            continue
+        total += item['price'] * qty
+        line_items.append({'name': item['name'], 'price': item['price'], 'qty': qty})
+
+    if not line_items:
+        return jsonify({'error': 'No valid items in order'}), 400
+
+    order = Order(
+        table_number=int(table_id),
+        items=json.dumps(line_items),
+        total=total,
+        status='new',
+    )
+    db.session.add(order)
+    db.session.commit()
+    order_dict = order.to_dict()
+    socketio.emit('new_order', order_dict)
+    return jsonify({'success': True, 'order': order_dict}), 201
+
+@app.route('/api/orders', methods=['GET'])
+def get_orders():
+    # Active orders = anything not yet served.
+    orders = Order.query.filter(Order.status != 'served').order_by(Order.created_at.desc()).all()
+    return jsonify([o.to_dict() for o in orders])
+
+@app.route('/api/update-order', methods=['POST'])
+def update_order():
+    data = request.json or {}
+    order_id = data.get('id')
+    new_status = data.get('status')
+
+    if not order_id or new_status not in ('new', 'preparing', 'served'):
+        return jsonify({'error': 'Invalid data'}), 400
+
+    order = Order.query.get(order_id)
+    if not order:
+        return jsonify({'error': 'Order not found'}), 404
+
+    order.status = new_status
+    db.session.commit()
+    order_dict = order.to_dict()
+    socketio.emit('order_updated', order_dict)
+    return jsonify({'success': True, 'order': order_dict})
 
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
