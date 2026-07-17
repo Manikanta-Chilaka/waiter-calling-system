@@ -19,8 +19,8 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/style.css">
 
-    <!-- SocketIO -->
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <!-- SocketIO (served from our own origin so it works even where the CDN is blocked) -->
+    <script src="/static/socket.io.min.js"></script>
 </head>
 
 <body class="bg-light customer-bg">
@@ -101,42 +101,51 @@
         // The table this page belongs to (from the URL).
         const TABLE_ID = {{ table_id }};
 
-        // Polling-only: the server can't serve WebSocket, so skip the upgrade
-        // to avoid Connected/Disconnected flapping on some networks.
-        const socket = io({ transports: ['polling'], upgrade: false });
-
-        socket.on('connect', () => {
+        // Realtime is optional — calling the waiter and ordering work over plain
+        // HTTP, so the page stays usable even if the live socket can't connect.
+        function initRealtime() {
             const b = document.getElementById('connectionStatus');
-            b.textContent = 'Connected'; b.className = 'badge bg-success';
-        });
-        socket.on('disconnect', () => {
-            const b = document.getElementById('connectionStatus');
-            b.textContent = 'Offline'; b.className = 'badge bg-danger';
-        });
-
-        // Waiter accepted / completed a CALL for this table
-        socket.on('update_request', function (data) {
-            if (data.table_number != TABLE_ID) return;
-            const msg = document.getElementById('statusMessage');
-            if (data.status === 'accepted') {
-                msg.style.display = 'block';
-                msg.textContent = 'Waiter ' + (data.accepted_by || '') + ' is on their way!';
-                msg.className = 'mt-4 text-primary fw-bold fs-5';
-            } else if (data.status === 'completed') {
-                const btn = document.getElementById('callWaiterBtn');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-bell-fill"></i> CALL WAITER';
-                msg.style.display = 'none';
+            if (typeof io === 'undefined') {
+                if (b) { b.textContent = 'Live updates off'; b.className = 'badge bg-secondary'; }
+                return;
             }
-        });
 
-        // Kitchen/waiter updated the status of one of THIS table's food orders
-        socket.on('order_updated', function (order) {
-            if (order.table_number != TABLE_ID) return;
-            showOrderStatus(order);
-        });
+            // Polling-only: the server can't serve WebSocket, so skip the upgrade
+            // to avoid Connected/Disconnected flapping on some networks.
+            const socket = io({ transports: ['polling'], upgrade: false });
 
-        // Tab switching
+            socket.on('connect', () => {
+                b.textContent = 'Connected'; b.className = 'badge bg-success';
+            });
+            socket.on('disconnect', () => {
+                b.textContent = 'Offline'; b.className = 'badge bg-danger';
+            });
+
+            // Waiter accepted / completed a CALL for this table
+            socket.on('update_request', function (data) {
+                if (data.table_number != TABLE_ID) return;
+                const msg = document.getElementById('statusMessage');
+                if (data.status === 'accepted') {
+                    msg.style.display = 'block';
+                    msg.textContent = 'Waiter ' + (data.accepted_by || '') + ' is on their way!';
+                    msg.className = 'mt-4 text-primary fw-bold fs-5';
+                } else if (data.status === 'completed') {
+                    const btn = document.getElementById('callWaiterBtn');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-bell-fill"></i> CALL WAITER';
+                    msg.style.display = 'none';
+                }
+            });
+
+            // Kitchen/waiter updated the status of one of THIS table's food orders
+            socket.on('order_updated', function (order) {
+                if (order.table_number != TABLE_ID) return;
+                showOrderStatus(order);
+            });
+        }
+        initRealtime();
+
+        // Tab switching (always works, socket or not)
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => switchTab(btn.dataset.tab));
         });
