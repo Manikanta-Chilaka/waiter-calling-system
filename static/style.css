@@ -1,73 +1,167 @@
-/* General Aesthetics */
+/* ============================================================
+   CU2 BREWHOUSE — Boho Brewhouse Theme
+   ------------------------------------------------------------
+   Palette:
+     Espresso   #241a12  dark surfaces / text
+     Parchment  #f6efe2  light background
+     Cream      #fffdf8  cards
+     Amber gold #c8891f  primary accent — "the brew"
+     Amber dk   #a8721a  hover
+     Amber lite #e3b25a  bright accents on dark
+     Terracotta #b5502f  secondary accent (Preparing)
+     Sage green #5f7a4f  success / veg / greenery
+     Tan        #e6dac2  borders on light
+     Muted      #7a6a55  secondary text
+   ============================================================ */
+
+:root {
+    --cu2-espresso:   #241a12;
+    --cu2-espresso-2: #2f2419;
+    --cu2-parchment:  #f6efe2;
+    --cu2-cream:      #fffdf8;
+    --cu2-amber:      #c8891f;
+    --cu2-amber-dark: #a8721a;
+    --cu2-amber-lite: #e3b25a;
+    --cu2-terracotta: #b5502f;
+    --cu2-sage:       #5f7a4f;
+    --cu2-tan:        #e6dac2;
+    --cu2-muted:      #7a6a55;
+}
+
+/* ---------- Base ---------- */
 body {
-    font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Poppins', 'Segoe UI', Roboto, sans-serif;
+    color: var(--cu2-espresso);
     transition: background-color 0.3s ease;
 }
 
-/* Customer Background */
+/* Customer background — warm parchment with a soft glow */
 .customer-bg {
-    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    background:
+        radial-gradient(1100px 480px at 50% -12%, #efe2cd 0%, rgba(239,226,205,0) 60%),
+        linear-gradient(180deg, #f6efe2 0%, #f1e7d5 100%);
+    min-height: 100vh;
 }
 
-/* Dashboard Background */
+/* Waiter dashboard — deep espresso */
 .dashboard-bg {
-    background-color: #121212 !important;
+    background:
+        radial-gradient(900px 380px at 50% -12%, #33261a 0%, rgba(51,38,26,0) 60%),
+        #1a130d !important;
+    color: #f3e9d8 !important;
 }
 
-/* Interactive Card Styling */
+/* ---------- Brand ---------- */
+.cu2-header { padding-top: .25rem; }
+.cu2-logo {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 800;
+    font-size: 2.1rem;
+    letter-spacing: 1px;
+    line-height: 1;
+    color: var(--cu2-espresso);
+}
+.cu2-logo span { color: var(--cu2-amber); }
+.cu2-tagline {
+    font-size: .72rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--cu2-muted);
+    margin-top: .35rem;
+}
+.dashboard-bg .cu2-logo { color: #f3e9d8; }
+
+/* ---------- Buttons (retheme Bootstrap tokens) ---------- */
+.btn-primary {
+    --bs-btn-bg: var(--cu2-amber);
+    --bs-btn-border-color: var(--cu2-amber);
+    --bs-btn-hover-bg: var(--cu2-amber-dark);
+    --bs-btn-hover-border-color: var(--cu2-amber-dark);
+    --bs-btn-active-bg: var(--cu2-amber-dark);
+    --bs-btn-active-border-color: var(--cu2-amber-dark);
+    --bs-btn-disabled-bg: var(--cu2-amber);
+    --bs-btn-disabled-border-color: var(--cu2-amber);
+    --bs-btn-color: #fff;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-active-color: #fff;
+    --bs-btn-disabled-color: #fff;
+}
+.btn-outline-primary {
+    --bs-btn-color: var(--cu2-amber-dark);
+    --bs-btn-border-color: var(--cu2-amber);
+    --bs-btn-hover-bg: var(--cu2-amber);
+    --bs-btn-hover-border-color: var(--cu2-amber);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-active-bg: var(--cu2-amber-dark);
+    --bs-btn-active-border-color: var(--cu2-amber-dark);
+}
+.btn-success {
+    --bs-btn-bg: var(--cu2-sage);
+    --bs-btn-border-color: var(--cu2-sage);
+    --bs-btn-hover-bg: #4e6641;
+    --bs-btn-hover-border-color: #4e6641;
+    --bs-btn-active-bg: #4e6641;
+    --bs-btn-color: #fff;
+    --bs-btn-hover-color: #fff;
+}
+.btn-info {
+    --bs-btn-bg: var(--cu2-terracotta);
+    --bs-btn-border-color: var(--cu2-terracotta);
+    --bs-btn-hover-bg: #99401f;
+    --bs-btn-hover-border-color: #99401f;
+    --bs-btn-color: #fff;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-active-color: #fff;
+}
+
+/* Accent text/badges */
+.text-primary { color: var(--cu2-amber-dark) !important; }
+.text-success { color: var(--cu2-sage) !important; }
+
+/* ---------- Tab switcher ---------- */
+.tab-btn { letter-spacing: .3px; }
+
+/* ---------- Customer: call card ---------- */
 .interactive-card {
-    border: none;
+    border: 1px solid var(--cu2-tan);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: var(--cu2-cream);
 }
-
 .interactive-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 15px 30px rgba(60,40,15,0.12) !important;
 }
-
-/* Call Button Animation */
 .call-btn {
     transition: all 0.2s;
-    background: linear-gradient(45deg, #007bff, #0056b3);
+    background: linear-gradient(45deg, var(--cu2-amber), var(--cu2-amber-dark));
     border: none;
+    color: #fff;
 }
-
 .call-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 10px 20px rgba(0, 123, 255, 0.3);
+    box-shadow: 0 10px 20px rgba(200, 137, 31, 0.35);
+    color: #fff;
 }
+.call-btn:active { transform: scale(0.95); }
 
-.call-btn:active {
-    transform: scale(0.95);
+/* ---------- Customer: menu ---------- */
+#menuContainer h5 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 700;
+    color: var(--cu2-espresso);
+    border-bottom: 2px solid var(--cu2-amber) !important;
 }
-
-/* Request Cards (Waiter Dashboard) */
-.request-card .card {
-    background: #1e1e1e !important;
-    transition: transform 0.2s, background-color 0.3s;
-}
-
-.request-card.new-request .card {
-    animation: flashInfo 2s infinite;
-}
-
-.request-card.accepted .card {
-    border-left: 5px solid #28a745 !important;
-    background: #192a1d !important;
-}
-
-/* Menu items (customer order page) */
 .menu-item {
+    background: var(--cu2-cream);
+    border: 1px solid var(--cu2-tan) !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .menu-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important;
+    box-shadow: 0 6px 16px rgba(60,40,15,0.10) !important;
 }
 
-/* Veg / Non-veg indicator */
+/* Veg / Non-veg indicator (standard India convention) */
 .veg-dot {
     display: inline-block;
     width: 12px;
@@ -79,14 +173,50 @@ body {
 .veg-dot.veg { background: #0f9d58; }
 .veg-dot.nonveg { background: #db3236; }
 
-/* Order cards flash while NEW, same cue as new call requests */
+/* Sticky cart bar */
+#cartBar {
+    background: linear-gradient(90deg, var(--cu2-espresso), var(--cu2-espresso-2)) !important;
+    border-top: 2px solid var(--cu2-amber);
+}
+
+/* ---------- Waiter: navbar ---------- */
+.navbar.bg-black {
+    background: linear-gradient(90deg, #1a130d, #2a1f14) !important;
+    border-bottom: 2px solid var(--cu2-amber);
+}
+.navbar-brand {
+    font-family: 'Playfair Display', Georgia, serif;
+    color: var(--cu2-amber-lite) !important;
+    letter-spacing: .5px;
+}
+
+/* ---------- Waiter: cards ---------- */
+.request-card .card,
+.order-card .card,
+.dashboard-bg .card.bg-secondary {
+    background: #2b2118 !important;
+    border: 1px solid #3d2f20 !important;
+    color: #f3e9d8 !important;
+    transition: transform 0.2s, background-color 0.3s;
+}
+.request-card.accepted .card {
+    border-left: 5px solid var(--cu2-sage) !important;
+    background: #22301d !important;
+}
+.dashboard-bg .modal-content.bg-dark {
+    background: #241a12 !important;
+    border: 1px solid #3d2f20;
+}
+
+/* New request / order attention flash (amber) */
+.request-card.new-request .card,
 .order-card.new-request .card {
     animation: flashInfo 2s infinite;
 }
 
-/* Animations */
+/* ---------- Animations ---------- */
 @keyframes flashInfo {
-    0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); border-left: 5px solid transparent; }
-    50% { box-shadow: 0 0 15px 5px rgba(255, 193, 7, 0.2); border-left: 5px solid #ffc107; }
-    100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); border-left: 5px solid transparent; }
+    0%   { box-shadow: 0 0 0 0 rgba(200, 137, 31, 0.45); border-left: 5px solid transparent; }
+    50%  { box-shadow: 0 0 15px 5px rgba(200, 137, 31, 0.25); border-left: 5px solid var(--cu2-amber); }
+    100% { box-shadow: 0 0 0 0 rgba(200, 137, 31, 0.45); border-left: 5px solid transparent; }
 }
