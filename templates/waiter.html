@@ -11,17 +11,17 @@
     <!-- Brand fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="/static/style.css">
 
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 
-<body class="bg-dark text-white dashboard-bg">
-    <nav class="navbar navbar-dark bg-black shadow-sm mb-4">
+<body class="dashboard-bg">
+    <nav class="navbar navbar-dark zomato-navbar shadow-sm mb-4">
         <div class="container">
-            <span class="navbar-brand mb-0 h1 fw-bold">CU2 <span style="color:#f3e9d8;">BREWHOUSE</span> <small class="fw-normal" style="font-size:.9rem; color:#c9b28e; font-family:'Poppins',sans-serif;">· Staff</small></span>
+            <span class="navbar-brand mb-0 h1 fw-bold">CU2 BREWHOUSE <small class="fw-normal" style="font-size:.9rem; opacity:.85;">· Staff</small></span>
             <div>
                 <button class="btn btn-outline-light btn-sm me-2 fw-bold" onclick="showStats()"><i class="bi bi-bar-chart-fill"></i> Performance Stats</button>
                 <span class="badge text-bg-light me-2 fw-bold" id="staffIdDisplay"></span>
@@ -38,9 +38,9 @@
                 <i class="bi bi-bell-fill"></i> Waiter Calls
                 <span class="badge bg-light text-dark ms-1" id="callsCount">0</span>
             </button>
-            <button type="button" class="btn btn-outline-light fw-bold tab-btn" data-tab="ordersTab">
+            <button type="button" class="btn btn-outline-primary fw-bold tab-btn" data-tab="ordersTab">
                 <i class="bi bi-basket-fill"></i> Food Orders
-                <span class="badge bg-light text-dark ms-1" id="ordersCount">0</span>
+                <span class="badge bg-secondary ms-1" id="ordersCount">0</span>
             </button>
         </div>
 
@@ -68,11 +68,11 @@
     <!-- Hidden Template for Cloning (waiter calls) -->
     <template id="requestTemplate">
         <div class="col-md-4 mb-4 request-card">
-            <div class="card bg-secondary text-white shadow rounded-3 h-100 border-0">
+            <div class="card rounded-3 h-100">
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title fw-bold">Table <span class="table-number"></span></h5>
                     <p class="card-text status-text mb-4 text-warning">Waiting...</p>
-                    <p class="small text-light mb-2 time-ago">Just now</p>
+                    <p class="small text-muted mb-2 time-ago">Just now</p>
 
                     <div class="mt-auto action-buttons">
                         <button class="btn btn-primary w-100 mb-2 accept-btn fw-bold">Accept Request</button>
@@ -87,10 +87,10 @@
     <!-- Stats Modal -->
     <div class="modal fade" id="statsModal" tabindex="-1" aria-labelledby="statsModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content bg-dark text-white">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title fw-bold" id="statsModalLabel"><i class="bi bi-graph-up"></i> Performance Stats</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="statsModalLabel"><i class="bi bi-graph-up text-primary"></i> Performance Stats</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="statsBody">
                     <div class="text-center">Loading stats...</div>

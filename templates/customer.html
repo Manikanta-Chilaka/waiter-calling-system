@@ -14,7 +14,7 @@
     <!-- Brand fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/style.css">
@@ -30,11 +30,11 @@
         <!-- Brand -->
         <div class="text-center cu2-header mb-3">
             <div class="cu2-logo">CU2 <span>BREWHOUSE</span></div>
-            <div class="cu2-tagline">Craft Brews · Boho Kitchen</div>
+            <div class="cu2-tagline">Craft Brews · Kitchen · Bar</div>
         </div>
 
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold mb-0" style="font-family:'Playfair Display',serif;"><i class="bi bi-cup-hot-fill text-primary"></i> Table {{ table_id }}</h4>
+            <h4 class="fw-bold mb-0"><i class="bi bi-geo-alt-fill text-primary"></i> Table {{ table_id }}</h4>
             <span class="badge bg-secondary" id="connectionStatus">Connecting…</span>
         </div>
 
@@ -81,7 +81,7 @@
     </div>
 
     <!-- ============ STICKY CART BAR ============ -->
-    <div id="cartBar" class="fixed-bottom bg-dark text-white p-3 shadow-lg" style="display:none;">
+    <div id="cartBar" class="fixed-bottom p-3" style="display:none;">
         <div class="container d-flex justify-content-between align-items-center" style="max-width: 720px;">
             <div>
                 <span class="fw-bold" id="cartCount">0 items</span>

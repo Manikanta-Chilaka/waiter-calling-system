@@ -8,8 +8,8 @@ function switchTab(tabId) {
     const pane = document.getElementById(tabId);
     if (pane) pane.style.display = 'block';
 
-    // Waiter page uses outline-light for inactive; customer uses outline-primary.
-    const outlineClass = document.getElementById('staffIdDisplay') ? 'btn-outline-light' : 'btn-outline-primary';
+    // Inactive tabs use the red outline style on both pages.
+    const outlineClass = 'btn-outline-primary';
     document.querySelectorAll('.tab-btn').forEach(btn => {
         if (btn.dataset.tab === tabId) {
             btn.classList.add('btn-primary');
@@ -395,14 +395,14 @@ async function loadOrders() {
 
 function orderItemsHtml(order) {
     return (order.items || []).map(li =>
-        `<li class="d-flex justify-content-between"><span>${li.qty} × ${li.name}</span><span class="text-light">₹${li.price * li.qty}</span></li>`
+        `<li class="d-flex justify-content-between"><span>${li.qty} × ${li.name}</span><span class="text-muted">₹${li.price * li.qty}</span></li>`
     ).join('');
 }
 
 function orderStatusMeta(status) {
-    if (status === 'new')       return { label: 'NEW',       badge: 'bg-warning text-dark' };
-    if (status === 'preparing') return { label: 'PREPARING', badge: 'bg-info text-dark' };
-    return { label: 'SERVED', badge: 'bg-success' };
+    if (status === 'new')       return { label: 'NEW',       badge: 'text-bg-danger' };
+    if (status === 'preparing') return { label: 'PREPARING', badge: 'text-bg-warning' };
+    return { label: 'SERVED', badge: 'text-bg-success' };
 }
 
 function renderOrderCardInner(order) {
@@ -415,13 +415,13 @@ function renderOrderCardInner(order) {
         actionBtn = `<button class="btn btn-success w-100 fw-bold" onclick="updateOrderStatus(${order.id}, 'served')">Mark Served</button>`;
     }
     return `
-      <div class="card bg-secondary text-white shadow rounded-3 h-100 border-0">
+      <div class="card rounded-3 h-100">
         <div class="card-body d-flex flex-column">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="card-title fw-bold mb-0">Table ${order.table_number}</h5>
             <span class="badge ${meta.badge}">${meta.label}</span>
           </div>
-          <p class="small text-light mb-2">Order #${order.id} • ${time}</p>
+          <p class="small text-muted mb-2">Order #${order.id} • ${time}</p>
           <ul class="list-unstyled mb-3">${orderItemsHtml(order)}</ul>
           <div class="fw-bold mb-3 border-top pt-2">Total: ₹${order.total}</div>
           <div class="mt-auto">${actionBtn}</div>
@@ -551,7 +551,7 @@ async function showStats() {
         stats.forEach((s, index) => {
             const isMe = s.waiter === CURRENT_STAFF_ID;
             html += `
-            <li class="list-group-item bg-secondary text-white d-flex justify-content-between align-items-center ${isMe ? 'border border-warning' : ''}">
+            <li class="list-group-item d-flex justify-content-between align-items-center ${isMe ? 'border border-danger' : ''}">
                 <div>
                     <span class="badge bg-dark me-2">#${index + 1}</span>
                     ${s.waiter} ${isMe ? '(You)' : ''}
