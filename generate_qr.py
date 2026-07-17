@@ -1,5 +1,6 @@
 import qrcode
 import os
+import sys
 import socket
 
 def get_local_ip():
@@ -12,9 +13,20 @@ def get_local_ip():
     except Exception:
         return "127.0.0.1"
 
+def get_base_url():
+    # Priority: CLI arg > BASE_URL env var > local network IP (dev fallback)
+    # In production, pass your Cloud Run URL, e.g.:
+    #   python generate_qr.py https://wcs-xxxxx.europe-west1.run.app
+    if len(sys.argv) > 1:
+        root = sys.argv[1]
+    elif os.environ.get("BASE_URL"):
+        root = os.environ["BASE_URL"]
+    else:
+        root = f"http://{get_local_ip()}:5000"
+    return root.rstrip("/") + "/table/"
+
 def generate_codes():
-    ip_addr = get_local_ip()
-    base_url = f"http://{ip_addr}:5000/table/" # Dynamic local network URL
+    base_url = get_base_url()
     output_dir = "qr_codes"
     
     if not os.path.exists(output_dir):
