@@ -653,6 +653,96 @@ async function updateOrderStatus(orderId, newStatus) {
     }
 }
 
+// ---- Waiter takes an order at the table (Take Order modal) ----
+let STAFF_MENU = [];
+let STAFF_MENU_MAP = {};
+const staffCart = {};
+
+async function loadStaffMenu() {
+    const container = document.getElementById('staffMenuContainer');
+    if (!container) return; // not on the waiter page
+    try {
+        const res = await fetch('/api/menu');
+        const data = await res.json();
+        STAFF_MENU = data.items || [];
+        STAFF_MENU_MAP = {};
+        STAFF_MENU.forEach(it => { STAFF_MENU_MAP[it.id] = it; });
+
+        let html = '';
+        (data.categories || []).forEach(cat => {
+            const items = STAFF_MENU.filter(it => it.category === cat);
+            if (!items.length) return;
+            html += `<h6 class="fw-bold mt-3 mb-2 text-primary">${cat}</h6>`;
+            items.forEach(it => {
+                const dot = it.veg ? 'veg' : 'nonveg';
+                html += `
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                  <div><span class="veg-dot ${dot}"></span> ${it.name} <span class="text-muted">₹${it.price}</span></div>
+                  <div class="text-nowrap">
+                    <button class="btn btn-sm btn-outline-primary" onclick="staffChangeQty(${it.id}, -1)">−</button>
+                    <span class="mx-2 fw-bold" id="staff-qty-${it.id}">0</span>
+                    <button class="btn btn-sm btn-primary" onclick="staffChangeQty(${it.id}, 1)">+</button>
+                  </div>
+                </div>`;
+            });
+        });
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = '<div class="text-danger">Could not load the menu.</div>';
+    }
+}
+
+function staffChangeQty(id, delta) {
+    const cur = staffCart[id] || 0;
+    const next = Math.max(0, cur + delta);
+    if (next === 0) delete staffCart[id];
+    else staffCart[id] = next;
+    const el = document.getElementById('staff-qty-' + id);
+    if (el) el.textContent = next;
+    updateStaffTotal();
+}
+
+function updateStaffTotal() {
+    let total = 0;
+    Object.keys(staffCart).forEach(id => {
+        const it = STAFF_MENU_MAP[id];
+        if (it) total += it.price * staffCart[id];
+    });
+    const el = document.getElementById('staffOrderTotal');
+    if (el) el.textContent = 'Total: ₹' + total;
+}
+
+async function submitStaffOrder() {
+    const tableInput = document.getElementById('staffOrderTable');
+    const table = parseInt(tableInput.value, 10);
+    if (!table) { alert('Enter a table number first.'); return; }
+
+    const items = Object.keys(staffCart).map(id => ({ id: parseInt(id, 10), qty: staffCart[id] }));
+    if (!items.length) { alert('Add at least one item.'); return; }
+
+    try {
+        const res = await fetch('/api/place-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ table: table, items: items })
+        });
+        if (!res.ok) throw new Error('Order failed');
+
+        // Reset the form
+        Object.keys(staffCart).forEach(id => delete staffCart[id]);
+        document.querySelectorAll('[id^="staff-qty-"]').forEach(e => e.textContent = '0');
+        updateStaffTotal();
+        tableInput.value = '';
+
+        // Close the modal (the new order arrives via the socket like any other)
+        const modalEl = document.getElementById('takeOrderModal');
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.hide();
+    } catch (e) {
+        alert('Could not place the order. Please try again.');
+    }
+}
+
 // ============================================================
 //  Shared — notification sound
 // ============================================================

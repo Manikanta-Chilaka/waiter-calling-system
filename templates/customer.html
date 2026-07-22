@@ -170,6 +170,13 @@
                 if (order.table_number != TABLE_ID) return;
                 showOrderStatus(order);
             });
+
+            // A new order was added to THIS table (e.g. the waiter took an order
+            // at the table) — keep the running bill in sync.
+            socket.on('new_order', function (order) {
+                if (order.table_number != TABLE_ID) return;
+                loadBill();
+            });
         }
         initRealtime();
 
