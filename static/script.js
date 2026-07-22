@@ -215,15 +215,10 @@ async function placeOrder(tableId) {
 // Called when the kitchen/waiter updates one of this table's orders
 function showOrderStatus(order) {
     const banner = document.getElementById('orderStatusBanner');
-    if (banner) {
+    if (banner && order.status === 'served') {
         banner.classList.remove('d-none');
-        if (order.status === 'preparing') {
-            banner.className = 'alert alert-warning fw-semibold';
-            banner.textContent = '👨‍🍳 Order #' + order.id + ' is being prepared.';
-        } else if (order.status === 'served') {
-            banner.className = 'alert alert-success fw-semibold';
-            banner.textContent = '🍽️ Order #' + order.id + ' has been served. Enjoy!';
-        }
+        banner.className = 'alert alert-success fw-semibold';
+        banner.textContent = '🍽️ Order #' + order.id + ' has been served. Enjoy!';
     }
     // Keep the bill in sync with status changes
     if (document.getElementById('billTab') && document.getElementById('billTab').style.display !== 'none') {
@@ -392,6 +387,45 @@ async function generateBill() {
 
 function printBill() {
     window.print();
+}
+
+// ============================================================
+//  MANAGER — overview of every table's orders
+// ============================================================
+function _setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+
+async function loadManagerOrders() {
+    const body = document.getElementById('managerOrders');
+    if (!body) return; // not on the manager page
+    try {
+        const res = await fetch('/api/all-orders');
+        const data = await res.json();
+        _setText('mgrActive', data.active);
+        _setText('mgrTables', data.tables);
+        _setText('mgrRevenue', '₹' + data.total_revenue);
+
+        const orders = data.orders || [];
+        if (!orders.length) {
+            body.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No orders yet.</td></tr>';
+            return;
+        }
+        body.innerHTML = orders.map(o => {
+            const meta = orderStatusMeta(o.status);
+            const time = o.created_at ? new Date(o.created_at).toLocaleTimeString() : '';
+            const items = (o.items || []).map(li => `${li.qty}× ${li.name}`).join(', ');
+            const servedBy = o.served_by ? `<div class="small text-muted">served: ${o.served_by}</div>` : '';
+            return `<tr>
+                <td class="fw-bold text-nowrap">Table ${o.table_number}</td>
+                <td>${items}</td>
+                <td class="text-nowrap fw-semibold">₹${o.total}</td>
+                <td class="text-nowrap">${o.taken_by || 'Customer'}${servedBy}</td>
+                <td><span class="badge ${meta.badge}">${meta.label}</span></td>
+                <td class="text-nowrap small text-muted">#${o.id} · ${time}</td>
+            </tr>`;
+        }).join('');
+    } catch (e) {
+        body.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Could not load orders.</td></tr>';
+    }
 }
 
 // ---- UPI payment (customer pays from their own device) ----
@@ -660,18 +694,16 @@ function orderItemsHtml(order) {
 }
 
 function orderStatusMeta(status) {
-    if (status === 'new')       return { label: 'NEW',       badge: 'text-bg-danger' };
-    if (status === 'preparing') return { label: 'PREPARING', badge: 'text-bg-warning' };
-    return { label: 'SERVED', badge: 'text-bg-success' };
+    if (status === 'served') return { label: 'SERVED', badge: 'text-bg-success' };
+    return { label: 'NEW', badge: 'text-bg-danger' };
 }
 
 function renderOrderCardInner(order) {
     const meta = orderStatusMeta(order.status);
     const time = order.created_at ? new Date(order.created_at).toLocaleTimeString() : '';
+    const takenBy = order.taken_by || 'Customer';
     let actionBtn = '';
-    if (order.status === 'new') {
-        actionBtn = `<button class="btn btn-info w-100 fw-bold" onclick="updateOrderStatus(${order.id}, 'preparing')">Start Preparing</button>`;
-    } else if (order.status === 'preparing') {
+    if (order.status !== 'served') {
         actionBtn = `<button class="btn btn-success w-100 fw-bold" onclick="updateOrderStatus(${order.id}, 'served')">Mark Served</button>`;
     }
     return `
@@ -681,7 +713,7 @@ function renderOrderCardInner(order) {
             <h5 class="card-title fw-bold mb-0">Table ${order.table_number}</h5>
             <span class="badge ${meta.badge}">${meta.label}</span>
           </div>
-          <p class="small text-muted mb-2">Order #${order.id} • ${time}</p>
+          <p class="small text-muted mb-2">Order #${order.id} • ${time} • by ${takenBy}</p>
           <ul class="list-unstyled mb-3">${orderItemsHtml(order)}</ul>
           <div class="fw-bold mb-3 border-top pt-2">Total: ₹${order.total}</div>
           <div class="mt-auto">${actionBtn}</div>
@@ -735,7 +767,7 @@ async function updateOrderStatus(orderId, newStatus) {
         const res = await fetch('/api/update-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: orderId, status: newStatus })
+            body: JSON.stringify({ id: orderId, status: newStatus, staff_id: CURRENT_STAFF_ID })
         });
         if (!res.ok) throw new Error("Update failed");
     } catch (e) {
@@ -815,7 +847,7 @@ async function submitStaffOrder() {
         const res = await fetch('/api/place-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ table: table, items: items })
+            body: JSON.stringify({ table: table, items: items, taken_by: CURRENT_STAFF_ID })
         });
         if (!res.ok) throw new Error('Order failed');
 

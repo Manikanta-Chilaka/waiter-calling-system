@@ -61,8 +61,10 @@ class Order(db.Model):
     table_number = db.Column(db.Integer, nullable=False)
     items = db.Column(db.Text, nullable=False)          # JSON: [{"name","price","qty"}]
     total = db.Column(db.Float, nullable=False, default=0)
-    status = db.Column(db.String, nullable=False, default='new')  # new | preparing | served
+    status = db.Column(db.String, nullable=False, default='new')  # new | served
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    taken_by = db.Column(db.String, nullable=True, default='Customer')  # who entered the order
+    served_by = db.Column(db.String, nullable=True)                     # who marked it served
 
     def to_dict(self):
         return {
@@ -72,6 +74,8 @@ class Order(db.Model):
             'total': self.total,
             'status': self.status,
             'created_at': self.created_at.isoformat() if self.created_at else None,
+            'taken_by': self.taken_by or 'Customer',
+            'served_by': self.served_by,
         }
 
 with app.app_context():
@@ -98,6 +102,10 @@ def customer_page(table_id):
 @app.route('/waiter')
 def waiter_dashboard():
     return render_template('waiter.html')
+
+@app.route('/manager')
+def manager_dashboard():
+    return render_template('manager.html')
 
 @app.route('/api/call-waiter', methods=['POST'])
 def call_waiter():
@@ -198,6 +206,7 @@ def place_order():
         items=json.dumps(line_items),
         total=total,
         status='new',
+        taken_by=(data.get('taken_by') or 'Customer'),
     )
     db.session.add(order)
     db.session.commit()
@@ -218,6 +227,18 @@ def table_orders(table_id):
     data = [o.to_dict() for o in orders]
     grand_total = sum(o.total for o in orders)
     return jsonify({'orders': data, 'grand_total': grand_total})
+
+@app.route('/api/all-orders', methods=['GET'])
+def all_orders():
+    # Everything ordered (any status), newest first — for the manager view.
+    orders = Order.query.order_by(Order.created_at.desc()).all()
+    data = [o.to_dict() for o in orders]
+    return jsonify({
+        'orders': data,
+        'total_revenue': round(sum(o.total for o in orders), 2),
+        'active': sum(1 for o in orders if o.status != 'served'),
+        'tables': len(set(o.table_number for o in orders)),
+    })
 
 def _table_totals(table_id):
     orders = Order.query.filter_by(table_number=table_id).all()
@@ -268,6 +289,8 @@ def update_order():
         return jsonify({'error': 'Order not found'}), 404
 
     order.status = new_status
+    if new_status == 'served' and data.get('staff_id'):
+        order.served_by = data.get('staff_id')
     db.session.commit()
     order_dict = order.to_dict()
     socketio.emit('order_updated', order_dict)
