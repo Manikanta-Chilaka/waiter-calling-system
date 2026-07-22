@@ -1,11 +1,21 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, Response
 from flask_socketio import SocketIO, emit
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
 import os
+import io
 import json
+import urllib.parse
+import qrcode
 
 from menu import MENU, MENU_BY_ID, CATEGORIES
+
+# ----- Payment / tax config -----
+# IMPORTANT: set UPI_VPA to the restaurant's REAL UPI ID or customers can't pay.
+# Override via environment variables on Cloud Run (recommended) or edit here.
+UPI_VPA = os.environ.get('UPI_VPA', 'basilbites@okicici')   # e.g. 9876543210@okhdfcbank
+UPI_PAYEE = os.environ.get('UPI_PAYEE', 'Basil Bites')
+GST_RATE = float(os.environ.get('GST_RATE', '0.05'))         # 5% GST; set 0 to disable
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_mvp_key!'
@@ -94,7 +104,7 @@ def call_waiter():
     data = request.json
     table_id = data.get('table')
     reason = data.get('reason', 'service')
-    if reason not in ('service', 'bill'):
+    if reason not in ('service', 'bill', 'payment'):
         reason = 'service'
     if not table_id:
         return jsonify({'error': 'Table number is required'}), 400
@@ -208,6 +218,41 @@ def table_orders(table_id):
     data = [o.to_dict() for o in orders]
     grand_total = sum(o.total for o in orders)
     return jsonify({'orders': data, 'grand_total': grand_total})
+
+def _table_totals(table_id):
+    orders = Order.query.filter_by(table_number=table_id).all()
+    subtotal = round(sum(o.total for o in orders), 2)
+    gst = round(subtotal * GST_RATE, 2)
+    total = round(subtotal + gst, 2)
+    return subtotal, gst, total, len(orders)
+
+def _upi_url(table_id, amount):
+    params = {
+        'pa': UPI_VPA,
+        'pn': UPI_PAYEE,
+        'am': f"{amount:.2f}",
+        'cu': 'INR',
+        'tn': f"{UPI_PAYEE} Table {table_id}",
+    }
+    return "upi://pay?" + urllib.parse.urlencode(params)
+
+@app.route('/api/pay-info/<int:table_id>', methods=['GET'])
+def pay_info(table_id):
+    subtotal, gst, total, n = _table_totals(table_id)
+    return jsonify({
+        'subtotal': subtotal, 'gst': gst, 'total': total, 'gst_rate': GST_RATE,
+        'order_count': n, 'vpa': UPI_VPA, 'payee': UPI_PAYEE,
+        'upi_url': _upi_url(table_id, total) if total > 0 else ''
+    })
+
+@app.route('/api/pay-qr/<int:table_id>')
+def pay_qr(table_id):
+    _, _, total, _ = _table_totals(table_id)
+    img = qrcode.make(_upi_url(table_id, total))
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+    return Response(buf.getvalue(), mimetype='image/png')
 
 @app.route('/api/update-order', methods=['POST'])
 def update_order():

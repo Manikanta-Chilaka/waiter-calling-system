@@ -209,11 +209,13 @@ async function loadBill() {
     if (!container) return;
     const tableId = window.TABLE_ID;
 
-    // Reset any previously generated receipt when re-opening the tab
+    // Reset any previously generated receipt / payment panel when re-opening the tab
     const receiptEl = document.getElementById('receipt');
     const printBtn = document.getElementById('printBillBtn');
+    const payPanel = document.getElementById('payPanel');
     if (receiptEl) { receiptEl.classList.add('d-none'); receiptEl.innerHTML = ''; }
     if (printBtn) printBtn.classList.add('d-none');
+    if (payPanel) { payPanel.classList.add('d-none'); payPanel.innerHTML = ''; }
     container.classList.remove('d-none');
 
     try {
@@ -244,11 +246,18 @@ async function loadBill() {
                    <div class="d-flex justify-content-between fw-semibold border-top pt-2"><span>Subtotal</span><span>₹${o.total}</span></div>
                  </div></div>`;
         });
+        const subtotal = data.grand_total;
+        const gst = subtotal * GST_RATE;
+        const total = subtotal + gst;
         html +=
-            `<div class="card border-0 mt-3" style="background:var(--bb-green);color:#fff;">
+            `<div class="card border-0 mt-3"><div class="card-body py-3">
+               <div class="d-flex justify-content-between"><span>Subtotal</span><span>₹${subtotal.toFixed(2)}</span></div>` +
+               (GST_RATE > 0 ? `<div class="d-flex justify-content-between text-muted small mt-1"><span>GST (${(GST_RATE * 100).toFixed(0)}%)</span><span>₹${gst.toFixed(2)}</span></div>` : '') +
+             `</div></div>
+             <div class="card border-0 mt-2" style="background:var(--bb-green);color:#fff;">
                <div class="card-body d-flex justify-content-between align-items-center">
                  <span class="fw-bold fs-5">Grand Total</span>
-                 <span class="fw-bold fs-4">₹${data.grand_total}</span>
+                 <span class="fw-bold fs-4">₹${total.toFixed(2)}</span>
                </div></div>`;
         container.innerHTML = html;
     } catch (e) {
@@ -355,6 +364,55 @@ function printBill() {
     window.print();
 }
 
+// ---- UPI payment (customer pays from their own device) ----
+async function payNow() {
+    const tableId = window.TABLE_ID;
+    const panel = document.getElementById('payPanel');
+    if (!panel) return;
+    try {
+        const res = await fetch('/api/pay-info/' + tableId);
+        const info = await res.json();
+        if (!info.total || info.total <= 0) {
+            alert('No bill to pay yet — add items from the Menu tab first.');
+            return;
+        }
+        const cacheBust = new Date().getTime();
+        panel.innerHTML = `
+          <div class="pay-card text-center">
+            <div class="text-muted small">Amount payable (incl. GST)</div>
+            <div class="pay-amount">₹${info.total.toFixed(2)}</div>
+            <img src="/api/pay-qr/${tableId}?t=${cacheBust}" alt="UPI QR code" class="pay-qr my-3">
+            <div class="small text-muted mb-2">Scan with any UPI app, or</div>
+            <a href="${info.upi_url}" class="btn btn-primary rounded-pill fw-bold w-100 mb-2">
+              <i class="bi bi-phone"></i> Pay in UPI App
+            </a>
+            <div class="small text-muted">Paying to UPI ID: <b>${info.vpa}</b></div>
+            <button class="btn btn-success rounded-pill fw-bold w-100 mt-3" onclick="confirmPaid(${tableId})">
+              <i class="bi bi-check2-circle"></i> I've Paid
+            </button>
+          </div>`;
+        panel.classList.remove('d-none');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) {
+        alert('Could not start payment. Please try again.');
+    }
+}
+
+async function confirmPaid(tableId) {
+    // No gateway callback with plain UPI, so let staff know to verify receipt.
+    try {
+        await fetch('/api/call-waiter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ table: tableId, reason: 'payment' })
+        });
+    } catch (e) { /* still show thanks */ }
+    const panel = document.getElementById('payPanel');
+    if (panel) {
+        panel.innerHTML = '<div class="alert alert-success fw-semibold text-center mb-0">✅ Thank you! Your payment is noted — a staff member will verify it shortly.</div>';
+    }
+}
+
 // ============================================================
 //  WAITER — identity
 // ============================================================
@@ -423,10 +481,13 @@ function addRequestToDashboard(request) {
     // Fill data
     clone.querySelector('.table-number').textContent = request.table_number;
 
-    // Flag bill requests distinctly so staff know it's a payment, not service
+    // Flag bill / payment requests distinctly so staff know what's needed
     if (request.reason === 'bill') {
         const titleElem = clone.querySelector('.card-title');
-        titleElem.innerHTML += ` <span class="badge text-bg-warning ms-2 bill-badge"><i class="bi bi-cash-coin"></i> BILL</span>`;
+        titleElem.innerHTML += ` <span class="badge text-bg-warning ms-2"><i class="bi bi-cash-coin"></i> BILL</span>`;
+    } else if (request.reason === 'payment') {
+        const titleElem = clone.querySelector('.card-title');
+        titleElem.innerHTML += ` <span class="badge text-bg-success ms-2"><i class="bi bi-credit-card"></i> PAID — verify</span>`;
     }
 
     if (request.click_count && request.click_count > 1) {

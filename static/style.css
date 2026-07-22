@@ -230,6 +230,19 @@ body {
 .receipt-grand { font-size: 1.15rem; font-weight: 800; color: var(--bb-green); border-top: 1px solid var(--bb-border); padding-top: 8px; margin-top: 4px; }
 .receipt-foot { text-align: center; margin-top: 14px; font-size: .85rem; color: var(--bb-muted); }
 
+/* UPI payment panel */
+.pay-card {
+    background: #fff;
+    border: 1px solid var(--bb-border);
+    border-radius: 14px;
+    padding: 20px;
+    max-width: 360px;
+    margin: 0 auto;
+    box-shadow: 0 4px 16px rgba(30,60,20,0.08);
+}
+.pay-amount { font-size: 2rem; font-weight: 800; color: var(--bb-green); line-height: 1.1; }
+.pay-qr { width: 200px; height: 200px; max-width: 60%; }
+
 /* When printing, show only the receipt */
 @media print {
     body * { visibility: hidden !important; }
