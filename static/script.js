@@ -86,16 +86,32 @@ async function loadMenu() {
 
 function renderMenu(categories) {
     const container = document.getElementById('menuContainer');
-    let html = '';
-    categories.forEach(cat => {
+    const activeCats = categories.filter(cat => MENU_ITEMS.some(it => it.category === cat));
+
+    if (!activeCats.length) {
+        container.innerHTML = '<div class="text-center text-muted py-4">Menu is empty.</div>';
+        return;
+    }
+
+    // Category selector chips (All + each category)
+    let chips = '<div class="menu-cats">';
+    chips += `<button class="cat-chip active" data-cat="all" onclick="filterMenu('all', this)">All</button>`;
+    activeCats.forEach(cat => {
+        chips += `<button class="cat-chip" data-cat="${cat}" onclick="filterMenu(this.dataset.cat, this)">${cat}</button>`;
+    });
+    chips += '</div>';
+
+    // Category sections
+    let sections = '';
+    activeCats.forEach(cat => {
         const items = MENU_ITEMS.filter(it => it.category === cat);
-        if (!items.length) return;
-        html += `<h5 class="fw-bold text-dark mt-4 mb-3 border-bottom pb-2">${cat}</h5>`;
+        sections += `<div class="menu-section" data-cat="${cat}">`;
+        sections += `<h5 class="fw-bold text-dark mt-4 mb-3 border-bottom pb-2">${cat}</h5>`;
         items.forEach(it => {
             const dot = it.veg
                 ? '<span class="veg-dot veg" title="Veg"></span>'
                 : '<span class="veg-dot nonveg" title="Non-veg"></span>';
-            html += `
+            sections += `
             <div class="card mb-2 shadow-sm border-0 menu-item" id="menu-item-${it.id}">
               <div class="card-body d-flex justify-content-between align-items-center py-3">
                 <div class="pe-3">
@@ -111,8 +127,22 @@ function renderMenu(categories) {
               </div>
             </div>`;
         });
+        sections += `</div>`;
     });
-    container.innerHTML = html || '<div class="text-center text-muted py-4">Menu is empty.</div>';
+
+    container.innerHTML = chips + sections;
+}
+
+// Show only the chosen category (or all)
+function filterMenu(cat, el) {
+    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+    document.querySelectorAll('.menu-section').forEach(sec => {
+        sec.style.display = (cat === 'all' || sec.dataset.cat === cat) ? 'block' : 'none';
+    });
+    // jump back to the top of the menu list
+    const c = document.getElementById('menuContainer');
+    if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function changeQty(id, delta) {
