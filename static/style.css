@@ -1,47 +1,49 @@
 /* ============================================================
-   Zomato-inspired theme — signature red on clean white.
+   Basil Bites — fresh basil-green theme.
    ------------------------------------------------------------
    Palette:
-     Zomato red   #e23744  primary / brand
-     Red dark     #cb202d
-     Red hover    #c72c3b
-     Page bg      #f4f4f5  light grey
+     Basil green  #4a8b3b  primary / brand
+     Green dark   #3a6f2e
+     Green hover  #427d36
+     Green deep   #2e7d32  success / served
+     Tomato       #e0662a  preparing / accent
+     Page bg      #f5f8f0  light green-tinted
      Card         #ffffff
-     Text         #1c1c1c
-     Muted        #696969
-     Border       #e8e8e8
-     Green        #267e3e  veg / served
-     Orange       #f0801f  preparing
+     Text         #20291c
+     Muted        #6f776a
+     Border       #e2e8da
    ============================================================ */
 
 :root {
-    --z-red:       #e23744;
-    --z-red-dark:  #cb202d;
-    --z-red-hover: #c72c3b;
-    --z-bg:        #f4f4f5;
-    --z-card:      #ffffff;
-    --z-text:      #1c1c1c;
-    --z-muted:     #696969;
-    --z-border:    #e8e8e8;
-    --z-green:     #267e3e;
-    --z-orange:    #f0801f;
+    --bb-green:       #4a8b3b;
+    --bb-green-dark:  #3a6f2e;
+    --bb-green-hover: #427d36;
+    --bb-green-deep:  #2e7d32;
+    --bb-tomato:      #e0662a;
+    --bb-bg:          #f5f8f0;
+    --bb-card:        #ffffff;
+    --bb-text:        #20291c;
+    --bb-muted:       #6f776a;
+    --bb-border:      #e2e8da;
 }
 
 /* ---------- Base ---------- */
 body {
     font-family: 'Poppins', 'Segoe UI', Roboto, sans-serif;
-    color: var(--z-text);
-    background: var(--z-bg);
+    color: var(--bb-text);
+    background: var(--bb-bg);
     transition: background-color 0.3s ease;
 }
 
 .customer-bg {
-    background: var(--z-bg);
+    background:
+        radial-gradient(1100px 460px at 50% -12%, #e8f1de 0%, rgba(232,241,222,0) 60%),
+        var(--bb-bg);
     min-height: 100vh;
 }
 .dashboard-bg {
-    background: var(--z-bg) !important;
-    color: var(--z-text) !important;
+    background: var(--bb-bg) !important;
+    color: var(--bb-text) !important;
     min-height: 100vh;
 }
 
@@ -49,91 +51,91 @@ body {
 .cu2-header { padding-top: .25rem; }
 .cu2-logo {
     font-family: 'Poppins', sans-serif;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 2rem;
     letter-spacing: -0.5px;
     line-height: 1;
-    color: var(--z-red);
+    color: var(--bb-green);
 }
-.cu2-logo span { color: var(--z-text); }
+.cu2-logo span { color: var(--bb-text); }
 .cu2-tagline {
     font-size: .72rem;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--z-muted);
+    color: var(--bb-muted);
     margin-top: .35rem;
 }
 
 /* ---------- Buttons (retheme Bootstrap tokens) ---------- */
 .btn-primary {
-    --bs-btn-bg: var(--z-red);
-    --bs-btn-border-color: var(--z-red);
-    --bs-btn-hover-bg: var(--z-red-hover);
-    --bs-btn-hover-border-color: var(--z-red-hover);
-    --bs-btn-active-bg: var(--z-red-dark);
-    --bs-btn-active-border-color: var(--z-red-dark);
-    --bs-btn-disabled-bg: var(--z-red);
-    --bs-btn-disabled-border-color: var(--z-red);
+    --bs-btn-bg: var(--bb-green);
+    --bs-btn-border-color: var(--bb-green);
+    --bs-btn-hover-bg: var(--bb-green-hover);
+    --bs-btn-hover-border-color: var(--bb-green-hover);
+    --bs-btn-active-bg: var(--bb-green-dark);
+    --bs-btn-active-border-color: var(--bb-green-dark);
+    --bs-btn-disabled-bg: var(--bb-green);
+    --bs-btn-disabled-border-color: var(--bb-green);
     --bs-btn-color: #fff;
     --bs-btn-hover-color: #fff;
     --bs-btn-active-color: #fff;
     --bs-btn-disabled-color: #fff;
 }
 .btn-outline-primary {
-    --bs-btn-color: var(--z-red);
-    --bs-btn-border-color: var(--z-red);
-    --bs-btn-hover-bg: var(--z-red);
-    --bs-btn-hover-border-color: var(--z-red);
+    --bs-btn-color: var(--bb-green-dark);
+    --bs-btn-border-color: var(--bb-green);
+    --bs-btn-hover-bg: var(--bb-green);
+    --bs-btn-hover-border-color: var(--bb-green);
     --bs-btn-hover-color: #fff;
-    --bs-btn-active-bg: var(--z-red-dark);
-    --bs-btn-active-border-color: var(--z-red-dark);
+    --bs-btn-active-bg: var(--bb-green-dark);
+    --bs-btn-active-border-color: var(--bb-green-dark);
 }
 .btn-success {
-    --bs-btn-bg: var(--z-green);
-    --bs-btn-border-color: var(--z-green);
-    --bs-btn-hover-bg: #1f6b34;
-    --bs-btn-hover-border-color: #1f6b34;
-    --bs-btn-active-bg: #1f6b34;
+    --bs-btn-bg: var(--bb-green-deep);
+    --bs-btn-border-color: var(--bb-green-deep);
+    --bs-btn-hover-bg: #256628;
+    --bs-btn-hover-border-color: #256628;
+    --bs-btn-active-bg: #256628;
     --bs-btn-color: #fff;
     --bs-btn-hover-color: #fff;
 }
 .btn-info {
-    --bs-btn-bg: var(--z-orange);
-    --bs-btn-border-color: var(--z-orange);
-    --bs-btn-hover-bg: #d86e10;
-    --bs-btn-hover-border-color: #d86e10;
+    --bs-btn-bg: var(--bb-tomato);
+    --bs-btn-border-color: var(--bb-tomato);
+    --bs-btn-hover-bg: #c9551d;
+    --bs-btn-hover-border-color: #c9551d;
     --bs-btn-color: #fff;
     --bs-btn-hover-color: #fff;
     --bs-btn-active-color: #fff;
 }
 
-.text-primary { color: var(--z-red) !important; }
-.text-success { color: var(--z-green) !important; }
+.text-primary { color: var(--bb-green-dark) !important; }
+.text-success { color: var(--bb-green-deep) !important; }
 
 /* ---------- Tabs ---------- */
 .tab-btn { letter-spacing: .2px; }
 
 /* ---------- Customer: call card ---------- */
 .interactive-card {
-    border: 1px solid var(--z-border);
+    border: 1px solid var(--bb-border);
     border-radius: 16px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    background: var(--z-card);
+    background: var(--bb-card);
 }
 .interactive-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.10) !important;
+    box-shadow: 0 12px 28px rgba(30,60,20,0.10) !important;
 }
 .call-btn {
     transition: all 0.2s;
-    background: var(--z-red);
+    background: var(--bb-green);
     border: none;
     color: #fff;
 }
 .call-btn:hover {
     transform: scale(1.03);
-    background: var(--z-red-hover);
-    box-shadow: 0 10px 20px rgba(226, 55, 68, 0.30);
+    background: var(--bb-green-hover);
+    box-shadow: 0 10px 20px rgba(74, 139, 59, 0.30);
     color: #fff;
 }
 .call-btn:active { transform: scale(0.97); }
@@ -142,18 +144,18 @@ body {
 #menuContainer h5 {
     font-family: 'Poppins', sans-serif;
     font-weight: 700;
-    color: var(--z-text);
-    border-bottom: 2px solid var(--z-red) !important;
+    color: var(--bb-text);
+    border-bottom: 2px solid var(--bb-green) !important;
 }
 .menu-item {
-    background: var(--z-card);
-    border: 1px solid var(--z-border) !important;
+    background: var(--bb-card);
+    border: 1px solid var(--bb-border) !important;
     border-radius: 12px;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .menu-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important;
+    box-shadow: 0 6px 16px rgba(30,60,20,0.08) !important;
 }
 
 /* Veg / Non-veg indicator (standard India convention) */
@@ -170,20 +172,20 @@ body {
 
 /* Sticky cart bar */
 #cartBar {
-    background: var(--z-card) !important;
-    color: var(--z-text) !important;
-    border-top: 1px solid var(--z-border);
-    box-shadow: 0 -4px 14px rgba(0,0,0,0.08);
+    background: var(--bb-card) !important;
+    color: var(--bb-text) !important;
+    border-top: 1px solid var(--bb-border);
+    box-shadow: 0 -4px 14px rgba(30,60,20,0.08);
 }
 
 /* ---------- Waiter: navbar ---------- */
-.zomato-navbar {
-    background: var(--z-red) !important;
+.bb-navbar {
+    background: linear-gradient(90deg, var(--bb-green-dark), var(--bb-green)) !important;
     border-bottom: none;
 }
 .navbar-brand {
     font-family: 'Poppins', sans-serif;
-    font-weight: 700;
+    font-weight: 800;
     color: #fff !important;
     letter-spacing: -0.3px;
 }
@@ -191,28 +193,27 @@ body {
 /* ---------- Waiter: cards (light) ---------- */
 .request-card .card,
 .order-card .card {
-    background: var(--z-card) !important;
-    border: 1px solid var(--z-border) !important;
-    color: var(--z-text) !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    background: var(--bb-card) !important;
+    border: 1px solid var(--bb-border) !important;
+    color: var(--bb-text) !important;
+    box-shadow: 0 2px 10px rgba(30,60,20,0.06);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 .request-card.accepted .card {
-    border-left: 4px solid var(--z-green) !important;
-    background: #f5faf6 !important;
+    border-left: 4px solid var(--bb-green) !important;
+    background: #f2f8ee !important;
 }
-/* keep secondary text readable on white cards */
 .request-card .card .text-light,
-.order-card .card .text-light { color: var(--z-muted) !important; }
+.order-card .card .text-light { color: var(--bb-muted) !important; }
 
 /* Stats modal (light) */
 .modal-content.bg-dark {
-    background: var(--z-card) !important;
-    color: var(--z-text) !important;
-    border: 1px solid var(--z-border);
+    background: var(--bb-card) !important;
+    color: var(--bb-text) !important;
+    border: 1px solid var(--bb-border);
 }
 
-/* New request / order attention flash (red) */
+/* New request / order attention flash (green) */
 .request-card.new-request .card,
 .order-card.new-request .card {
     animation: flashInfo 2s infinite;
@@ -220,7 +221,7 @@ body {
 
 /* ---------- Animations ---------- */
 @keyframes flashInfo {
-    0%   { box-shadow: 0 0 0 0 rgba(226, 55, 68, 0.45); }
-    50%  { box-shadow: 0 0 14px 4px rgba(226, 55, 68, 0.25); }
-    100% { box-shadow: 0 0 0 0 rgba(226, 55, 68, 0.45); }
+    0%   { box-shadow: 0 0 0 0 rgba(74, 139, 59, 0.45); }
+    50%  { box-shadow: 0 0 14px 4px rgba(74, 139, 59, 0.28); }
+    100% { box-shadow: 0 0 0 0 rgba(74, 139, 59, 0.45); }
 }
