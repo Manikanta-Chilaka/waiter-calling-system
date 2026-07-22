@@ -33,15 +33,15 @@
 
     <div class="container">
 
-        <!-- Tab switcher -->
-        <div class="btn-group w-100 mb-4 shadow-sm" role="group">
-            <button type="button" class="btn btn-primary fw-bold tab-btn" data-tab="callsTab">
-                <i class="bi bi-bell-fill"></i> Waiter Calls
-                <span class="badge bg-light text-dark ms-1" id="callsCount">0</span>
+        <!-- Modern segmented navigation -->
+        <div class="nav-segment mb-4" role="tablist">
+            <button type="button" class="nav-seg-btn active tab-btn" data-tab="callsTab">
+                <i class="bi bi-bell-fill"></i>
+                <span>Waiter Calls <span class="seg-count" id="callsCount">0</span></span>
             </button>
-            <button type="button" class="btn btn-outline-primary fw-bold tab-btn" data-tab="ordersTab">
-                <i class="bi bi-basket-fill"></i> Food Orders
-                <span class="badge bg-secondary ms-1" id="ordersCount">0</span>
+            <button type="button" class="nav-seg-btn tab-btn" data-tab="ordersTab">
+                <i class="bi bi-basket-fill"></i>
+                <span>Food Orders <span class="seg-count" id="ordersCount">0</span></span>
             </button>
         </div>
 

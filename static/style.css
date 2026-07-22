@@ -151,6 +151,20 @@ body {
 }
 .nav-seg-btn.active:hover { color: #fff; background: var(--bb-green); }
 
+/* Live count pill inside a segment (waiter dashboard) */
+.seg-count {
+    display: inline-block;
+    min-width: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    font-size: .7rem;
+    font-weight: 700;
+    line-height: 18px;
+    background: rgba(0, 0, 0, .08);
+    color: var(--bb-text);
+}
+.nav-seg-btn.active .seg-count { background: rgba(255, 255, 255, .28); color: #fff; }
+
 /* ---------- Customer: call card ---------- */
 .interactive-card {
     border: 1px solid var(--bb-border);
