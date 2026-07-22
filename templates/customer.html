@@ -84,12 +84,23 @@
 
         <!-- ============ TAB 3: BILL ============ -->
         <div id="billTab" class="tab-pane" style="display:none;">
+            <!-- Running summary of what the table has ordered -->
             <div id="billContainer">
                 <div class="text-center text-muted py-5">Loading your bill…</div>
             </div>
-            <div class="d-grid mt-4">
-                <button class="btn btn-primary btn-lg rounded-pill fw-bold" onclick="requestBill({{ table_id }})">
-                    <i class="bi bi-cash-coin"></i> Request Bill
+
+            <!-- Formal generated bill / receipt (appears after tapping Generate Bill) -->
+            <div id="receipt" class="d-none"></div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button class="btn btn-primary btn-lg rounded-pill fw-bold" onclick="generateBill()">
+                    <i class="bi bi-receipt-cutoff"></i> Generate Bill
+                </button>
+                <button id="printBillBtn" class="btn btn-outline-primary rounded-pill fw-bold d-none" onclick="printBill()">
+                    <i class="bi bi-printer"></i> Print / Save as PDF
+                </button>
+                <button class="btn btn-outline-primary rounded-pill fw-bold" onclick="requestBill({{ table_id }})">
+                    <i class="bi bi-bell"></i> Request Bill from Staff
                 </button>
             </div>
             <div id="billRequestMsg" class="alert alert-success fw-semibold mt-3 d-none" role="alert"></div>

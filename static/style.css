@@ -206,6 +206,38 @@ body {
 .veg-dot.veg { background: #0f9d58; }
 .veg-dot.nonveg { background: #db3236; }
 
+/* Generated bill / receipt */
+.receipt-card {
+    background: #fff;
+    border: 1px solid var(--bb-border);
+    border-radius: 14px;
+    padding: 22px;
+    max-width: 420px;
+    margin: 0 auto;
+    box-shadow: 0 4px 16px rgba(30,60,20,0.08);
+}
+.receipt-head { text-align: center; border-bottom: 1px dashed var(--bb-border); padding-bottom: 12px; margin-bottom: 12px; }
+.receipt-logo { font-weight: 800; font-size: 1.4rem; color: var(--bb-green); }
+.receipt-sub { font-size: .72rem; color: var(--bb-muted); letter-spacing: 1px; text-transform: uppercase; }
+.receipt-meta { font-size: .85rem; margin-bottom: 12px; }
+.receipt-meta > div { display: flex; justify-content: space-between; padding: 2px 0; }
+.receipt-meta span { color: var(--bb-muted); }
+.receipt-table { width: 100%; font-size: .9rem; border-collapse: collapse; margin-bottom: 8px; }
+.receipt-table th { border-bottom: 1px solid var(--bb-border); text-align: left; padding: 4px 0; color: var(--bb-muted); font-weight: 600; }
+.receipt-table td { padding: 4px 0; }
+.receipt-totals { border-top: 1px dashed var(--bb-border); padding-top: 12px; font-size: .9rem; }
+.receipt-totals > div { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.receipt-grand { font-size: 1.15rem; font-weight: 800; color: var(--bb-green); border-top: 1px solid var(--bb-border); padding-top: 8px; margin-top: 4px; }
+.receipt-foot { text-align: center; margin-top: 14px; font-size: .85rem; color: var(--bb-muted); }
+
+/* When printing, show only the receipt */
+@media print {
+    body * { visibility: hidden !important; }
+    #receipt, #receipt * { visibility: visible !important; }
+    #receipt { position: absolute; left: 0; top: 0; width: 100%; }
+    .receipt-card { box-shadow: none; border: none; max-width: 100%; }
+}
+
 /* Sticky cart bar */
 #cartBar {
     background: var(--bb-card) !important;

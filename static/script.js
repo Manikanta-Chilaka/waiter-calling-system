@@ -208,6 +208,14 @@ async function loadBill() {
     const container = document.getElementById('billContainer');
     if (!container) return;
     const tableId = window.TABLE_ID;
+
+    // Reset any previously generated receipt when re-opening the tab
+    const receiptEl = document.getElementById('receipt');
+    const printBtn = document.getElementById('printBillBtn');
+    if (receiptEl) { receiptEl.classList.add('d-none'); receiptEl.innerHTML = ''; }
+    if (printBtn) printBtn.classList.add('d-none');
+    container.classList.remove('d-none');
+
     try {
         const res = await fetch('/api/table-orders/' + tableId);
         const data = await res.json();
@@ -264,6 +272,87 @@ async function requestBill(tableId) {
         msg.className = 'alert alert-danger fw-semibold mt-3';
         msg.textContent = 'Could not request the bill. Please try again.';
     }
+}
+
+// GST rate applied to the generated bill. 5% = standard Indian restaurant GST
+// (2.5% CGST + 2.5% SGST). Set to 0 to show no tax, or change to your rate.
+const GST_RATE = 0.05;
+
+// Customer generates their own itemised bill/receipt (with tax + total).
+async function generateBill() {
+    const tableId = window.TABLE_ID;
+    const container = document.getElementById('billContainer');
+    const receipt = document.getElementById('receipt');
+    const printBtn = document.getElementById('printBillBtn');
+    if (!receipt) return;
+
+    try {
+        const res = await fetch('/api/table-orders/' + tableId);
+        const data = await res.json();
+        const orders = data.orders || [];
+        if (!orders.length) {
+            alert('No orders yet — add items from the Menu tab first.');
+            return;
+        }
+
+        const subtotal = data.grand_total;
+        const cgst = subtotal * GST_RATE / 2;
+        const sgst = subtotal * GST_RATE / 2;
+        const total = subtotal + cgst + sgst;
+
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const billNo = 'BB' + tableId + '-' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+        const dateStr = now.toLocaleString('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        let lines = '';
+        orders.forEach(o => {
+            (o.items || []).forEach(li => {
+                lines += `<tr><td>${li.qty} × ${li.name}</td><td class="text-end">₹${li.price * li.qty}</td></tr>`;
+            });
+        });
+
+        const taxRows = GST_RATE > 0
+            ? `<div><span>CGST (${(GST_RATE * 50).toFixed(2)}%)</span><span>₹${cgst.toFixed(2)}</span></div>
+               <div><span>SGST (${(GST_RATE * 50).toFixed(2)}%)</span><span>₹${sgst.toFixed(2)}</span></div>`
+            : '';
+
+        receipt.innerHTML = `
+          <div class="receipt-card">
+            <div class="receipt-head">
+              <div class="receipt-logo">🌿 BASIL BITES</div>
+              <div class="receipt-sub">Fresh Bites · Taramani, Chennai</div>
+            </div>
+            <div class="receipt-meta">
+              <div><span>Bill No</span><b>${billNo}</b></div>
+              <div><span>Table</span><b>${tableId}</b></div>
+              <div><span>Date</span><b>${dateStr}</b></div>
+            </div>
+            <table class="receipt-table">
+              <thead><tr><th>Item</th><th class="text-end">Amount</th></tr></thead>
+              <tbody>${lines}</tbody>
+            </table>
+            <div class="receipt-totals">
+              <div><span>Subtotal</span><span>₹${subtotal.toFixed(2)}</span></div>
+              ${taxRows}
+              <div class="receipt-grand"><span>Grand Total</span><span>₹${total.toFixed(2)}</span></div>
+            </div>
+            <div class="receipt-foot">Thank you for dining with us! 🌿</div>
+          </div>`;
+
+        container.classList.add('d-none');
+        receipt.classList.remove('d-none');
+        printBtn.classList.remove('d-none');
+        receipt.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) {
+        alert('Could not generate the bill. Please try again.');
+    }
+}
+
+function printBill() {
+    window.print();
 }
 
 // ============================================================
