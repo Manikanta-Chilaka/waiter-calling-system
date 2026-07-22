@@ -115,6 +115,42 @@ body {
 /* ---------- Tabs ---------- */
 .tab-btn { letter-spacing: .2px; }
 
+/* Modern segmented navigation (customer) */
+.nav-segment {
+    display: flex;
+    gap: 6px;
+    background: var(--bb-card);
+    border: 1px solid var(--bb-border);
+    border-radius: 16px;
+    padding: 6px;
+    box-shadow: 0 2px 10px rgba(30,60,20,0.05);
+}
+.nav-seg-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--bb-muted);
+    border-radius: 11px;
+    padding: 10px 4px;
+    font-weight: 600;
+    font-size: .85rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+.nav-seg-btn i { font-size: 1.25rem; }
+.nav-seg-btn:hover { color: var(--bb-green-dark); background: #eef6e8; }
+.nav-seg-btn:active { transform: scale(0.96); }
+.nav-seg-btn.active {
+    background: var(--bb-green);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(74,139,59,0.35);
+}
+.nav-seg-btn.active:hover { color: #fff; background: var(--bb-green); }
+
 /* ---------- Customer: call card ---------- */
 .interactive-card {
     border: 1px solid var(--bb-border);

@@ -38,13 +38,16 @@
             <span class="badge bg-secondary" id="connectionStatus">Connecting…</span>
         </div>
 
-        <!-- Tab buttons -->
-        <div class="btn-group w-100 mb-4 shadow-sm" role="group">
-            <button type="button" class="btn btn-primary fw-bold tab-btn" data-tab="callTab">
-                <i class="bi bi-bell-fill"></i> Call Waiter
+        <!-- Modern segmented navigation -->
+        <div class="nav-segment mb-4" role="tablist">
+            <button type="button" class="nav-seg-btn active tab-btn" data-tab="callTab">
+                <i class="bi bi-bell-fill"></i><span>Call Waiter</span>
             </button>
-            <button type="button" class="btn btn-outline-primary fw-bold tab-btn" data-tab="menuTab">
-                <i class="bi bi-journal-text"></i> Order Food
+            <button type="button" class="nav-seg-btn tab-btn" data-tab="menuTab">
+                <i class="bi bi-egg-fried"></i><span>Menu</span>
+            </button>
+            <button type="button" class="nav-seg-btn tab-btn" data-tab="billTab">
+                <i class="bi bi-receipt"></i><span>Bill</span>
             </button>
         </div>
 
@@ -78,6 +81,19 @@
             <!-- Spacer so the fixed cart bar never hides the last item -->
             <div style="height: 90px;"></div>
         </div>
+
+        <!-- ============ TAB 3: BILL ============ -->
+        <div id="billTab" class="tab-pane" style="display:none;">
+            <div id="billContainer">
+                <div class="text-center text-muted py-5">Loading your bill…</div>
+            </div>
+            <div class="d-grid mt-4">
+                <button class="btn btn-primary btn-lg rounded-pill fw-bold" onclick="requestBill({{ table_id }})">
+                    <i class="bi bi-cash-coin"></i> Request Bill
+                </button>
+            </div>
+            <div id="billRequestMsg" class="alert alert-success fw-semibold mt-3 d-none" role="alert"></div>
+        </div>
     </div>
 
     <!-- ============ STICKY CART BAR ============ -->
@@ -100,6 +116,7 @@
     <script>
         // The table this page belongs to (from the URL).
         const TABLE_ID = {{ table_id }};
+        window.TABLE_ID = TABLE_ID;
 
         // Realtime is optional — calling the waiter and ordering work over plain
         // HTTP, so the page stays usable even if the live socket can't connect.

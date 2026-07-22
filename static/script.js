@@ -8,17 +8,20 @@ function switchTab(tabId) {
     const pane = document.getElementById(tabId);
     if (pane) pane.style.display = 'block';
 
-    // Inactive tabs use the red outline style on both pages.
-    const outlineClass = 'btn-outline-primary';
     document.querySelectorAll('.tab-btn').forEach(btn => {
-        if (btn.dataset.tab === tabId) {
-            btn.classList.add('btn-primary');
-            btn.classList.remove('btn-outline-primary', 'btn-outline-light');
+        const on = btn.dataset.tab === tabId;
+        if (btn.classList.contains('btn')) {
+            // Waiter page: Bootstrap fill / outline buttons
+            btn.classList.toggle('btn-primary', on);
+            btn.classList.toggle('btn-outline-primary', !on);
         } else {
-            btn.classList.remove('btn-primary');
-            btn.classList.add(outlineClass);
+            // Customer page: modern segmented nav
+            btn.classList.toggle('active', on);
         }
     });
+
+    // Refresh the bill each time it's opened
+    if (tabId === 'billTab') loadBill();
 }
 
 // ============================================================
@@ -170,6 +173,7 @@ async function placeOrder(tableId) {
         banner.classList.remove('d-none');
         banner.className = 'alert alert-success fw-semibold';
         banner.textContent = '✅ Order #' + result.order.id + ' placed (₹' + result.order.total + ') — we’ll start preparing it shortly.';
+        loadBill(); // keep the Bill tab up to date
     } catch (e) {
         alert(e.message || 'Could not place order. Please try again.');
     } finally {
@@ -181,14 +185,84 @@ async function placeOrder(tableId) {
 // Called when the kitchen/waiter updates one of this table's orders
 function showOrderStatus(order) {
     const banner = document.getElementById('orderStatusBanner');
-    if (!banner) return;
-    banner.classList.remove('d-none');
-    if (order.status === 'preparing') {
-        banner.className = 'alert alert-warning fw-semibold';
-        banner.textContent = '👨‍🍳 Order #' + order.id + ' is being prepared.';
-    } else if (order.status === 'served') {
-        banner.className = 'alert alert-success fw-semibold';
-        banner.textContent = '🍽️ Order #' + order.id + ' has been served. Enjoy!';
+    if (banner) {
+        banner.classList.remove('d-none');
+        if (order.status === 'preparing') {
+            banner.className = 'alert alert-warning fw-semibold';
+            banner.textContent = '👨‍🍳 Order #' + order.id + ' is being prepared.';
+        } else if (order.status === 'served') {
+            banner.className = 'alert alert-success fw-semibold';
+            banner.textContent = '🍽️ Order #' + order.id + ' has been served. Enjoy!';
+        }
+    }
+    // Keep the bill in sync with status changes
+    if (document.getElementById('billTab') && document.getElementById('billTab').style.display !== 'none') {
+        loadBill();
+    }
+}
+
+// ============================================================
+//  CUSTOMER — Bill
+// ============================================================
+async function loadBill() {
+    const container = document.getElementById('billContainer');
+    if (!container) return;
+    const tableId = window.TABLE_ID;
+    try {
+        const res = await fetch('/api/table-orders/' + tableId);
+        const data = await res.json();
+        const orders = data.orders || [];
+
+        if (!orders.length) {
+            container.innerHTML =
+                '<div class="text-center text-muted py-5">' +
+                '<i class="bi bi-receipt" style="font-size:2.2rem;"></i>' +
+                '<div class="mt-2">No orders yet. Your bill will appear here once you order.</div></div>';
+            return;
+        }
+
+        let html = '<h5 class="fw-bold mb-3">Your Bill</h5>';
+        orders.forEach(o => {
+            const label = o.status === 'served' ? 'Served' : (o.status === 'preparing' ? 'Preparing' : 'New');
+            const items = (o.items || []).map(li =>
+                `<li class="d-flex justify-content-between"><span>${li.qty} × ${li.name}</span><span>₹${li.price * li.qty}</span></li>`
+            ).join('');
+            html +=
+                `<div class="card mb-2 border-0 shadow-sm"><div class="card-body py-3">
+                   <div class="d-flex justify-content-between small text-muted mb-2">
+                     <span>Order #${o.id}</span><span>${label}</span>
+                   </div>
+                   <ul class="list-unstyled mb-2">${items}</ul>
+                   <div class="d-flex justify-content-between fw-semibold border-top pt-2"><span>Subtotal</span><span>₹${o.total}</span></div>
+                 </div></div>`;
+        });
+        html +=
+            `<div class="card border-0 mt-3" style="background:var(--bb-green);color:#fff;">
+               <div class="card-body d-flex justify-content-between align-items-center">
+                 <span class="fw-bold fs-5">Grand Total</span>
+                 <span class="fw-bold fs-4">₹${data.grand_total}</span>
+               </div></div>`;
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = '<div class="text-center text-danger py-4">Could not load your bill. Please try again.</div>';
+    }
+}
+
+async function requestBill(tableId) {
+    const msg = document.getElementById('billRequestMsg');
+    try {
+        const res = await fetch('/api/call-waiter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ table: tableId, reason: 'bill' })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Failed');
+        msg.className = 'alert alert-success fw-semibold mt-3';
+        msg.textContent = '✅ Bill requested — a staff member will bring it to Table ' + tableId + '.';
+    } catch (e) {
+        msg.className = 'alert alert-danger fw-semibold mt-3';
+        msg.textContent = 'Could not request the bill. Please try again.';
     }
 }
 
@@ -259,6 +333,12 @@ function addRequestToDashboard(request) {
 
     // Fill data
     clone.querySelector('.table-number').textContent = request.table_number;
+
+    // Flag bill requests distinctly so staff know it's a payment, not service
+    if (request.reason === 'bill') {
+        const titleElem = clone.querySelector('.card-title');
+        titleElem.innerHTML += ` <span class="badge text-bg-warning ms-2 bill-badge"><i class="bi bi-cash-coin"></i> BILL</span>`;
+    }
 
     if (request.click_count && request.click_count > 1) {
         // Add a click indicator badge

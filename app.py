@@ -30,6 +30,7 @@ class WaiterRequest(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
     click_count = db.Column(db.Integer, default=1)
     accepted_at = db.Column(db.DateTime, nullable=True)
+    reason = db.Column(db.String, nullable=True, default='service')  # 'service' | 'bill'
 
     def to_dict(self):
         return {
@@ -40,7 +41,8 @@ class WaiterRequest(db.Model):
             'accepted_by': self.accepted_by,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'click_count': self.click_count,
-            'accepted_at': self.accepted_at.isoformat() if self.accepted_at else None
+            'accepted_at': self.accepted_at.isoformat() if self.accepted_at else None,
+            'reason': self.reason or 'service'
         }
 
 class Order(db.Model):
@@ -91,12 +93,15 @@ def waiter_dashboard():
 def call_waiter():
     data = request.json
     table_id = data.get('table')
+    reason = data.get('reason', 'service')
+    if reason not in ('service', 'bill'):
+        reason = 'service'
     if not table_id:
         return jsonify({'error': 'Table number is required'}), 400
 
-    # Check if there is already a pending request for this table
-    existing_request = WaiterRequest.query.filter_by(table_number=table_id, status='pending').first()
-    
+    # Check if there is already a pending request of this kind for this table
+    existing_request = WaiterRequest.query.filter_by(table_number=table_id, status='pending', reason=reason).first()
+
     if existing_request:
         existing_request.click_count += 1
         db.session.commit()
@@ -104,7 +109,7 @@ def call_waiter():
         socketio.emit('update_request', req_dict)
         return jsonify({'success': True, 'request': req_dict, 'message': 'Called again!'}), 200
     else:
-        new_request = WaiterRequest(table_number=table_id)
+        new_request = WaiterRequest(table_number=table_id, reason=reason)
         db.session.add(new_request)
         db.session.commit()
         req_dict = new_request.to_dict()
@@ -195,6 +200,14 @@ def get_orders():
     # Active orders = anything not yet served.
     orders = Order.query.filter(Order.status != 'served').order_by(Order.created_at.desc()).all()
     return jsonify([o.to_dict() for o in orders])
+
+@app.route('/api/table-orders/<int:table_id>', methods=['GET'])
+def table_orders(table_id):
+    # Everything this table has ordered (any status) — the running bill.
+    orders = Order.query.filter_by(table_number=table_id).order_by(Order.created_at.asc()).all()
+    data = [o.to_dict() for o in orders]
+    grand_total = sum(o.total for o in orders)
+    return jsonify({'orders': data, 'grand_total': grand_total})
 
 @app.route('/api/update-order', methods=['POST'])
 def update_order():
